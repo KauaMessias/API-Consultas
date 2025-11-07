@@ -9,6 +9,7 @@ import com.example.consultas.models.MedicoModel;
 import com.example.consultas.repositories.ClienteRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,42 +19,38 @@ import java.util.UUID;
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public ClienteService(ClienteRepository clienteRepository){
+    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder) {
         this.clienteRepository = clienteRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-
+    @Transactional
     public ClienteResponseDto addCliente(ClienteRequestDto clienteRequestDto){
         ClienteModel clienteModel = new ClienteModel();
         BeanUtils.copyProperties(clienteRequestDto, clienteModel);
-        clienteModel = clienteRepository.save(clienteModel);
 
-        return new ClienteResponseDto(clienteModel);
+        clienteModel.setSenha(passwordEncoder.encode(clienteRequestDto.senha()));
+
+        return new ClienteResponseDto(clienteRepository.save(clienteModel));
     }
 
-
+    @Transactional
     public ClienteResponseDto updateCliente(UUID id, ClienteRequestDto clienteRequestDto){
         ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new);
-        BeanUtils.copyProperties(clienteRequestDto, clienteModel);
-        clienteModel = clienteRepository.save(clienteModel);
+        BeanUtils.copyProperties(clienteRequestDto, clienteModel, "senha");
 
-        return new ClienteResponseDto(clienteModel);
+        if(clienteRequestDto.senha() != null && !clienteRequestDto.senha().trim().isEmpty()){
+            clienteModel.setSenha(passwordEncoder.encode(clienteRequestDto.senha()));
+        }
+
+        return new ClienteResponseDto(clienteRepository.save(clienteModel));
     }
 
 
     public ClienteResponseDto getClienteById(UUID id){
         return new ClienteResponseDto(clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new));
-    }
-
-
-    public ClienteResponseDto getClienteByCpf(String cpf){
-        return new ClienteResponseDto(clienteRepository.findByCpf(cpf).orElseThrow(ClienteNotFoundException::new));
-    }
-
-
-    public ClienteResponseDto getClienteByEmail(String email){
-        return new ClienteResponseDto(clienteRepository.findByEmail(email).orElseThrow(ClienteNotFoundException::new));
     }
 
 
@@ -69,7 +66,10 @@ public class ClienteService {
 
     @Transactional
     public void deleteCliente(UUID id){
-        clienteRepository.delete(clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new));
+        if(!clienteRepository.existsById(id)){
+            throw new ClienteNotFoundException();
+        }
+        clienteRepository.deleteById(id);
     }
 
 }

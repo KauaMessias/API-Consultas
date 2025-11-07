@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,9 +19,11 @@ import java.util.UUID;
 public class MedicoService {
 
     private final MedicoRepository medicoRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public MedicoService(MedicoRepository medicoRepository) {
+    public MedicoService(MedicoRepository medicoRepository, PasswordEncoder passwordEncoder) {
         this.medicoRepository = medicoRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
 
@@ -61,9 +64,10 @@ public class MedicoService {
     public MedicoResponseDto addMedico(MedicoRequestDto medicoRequestDto) {
         MedicoModel medicoModel = new MedicoModel();
         BeanUtils.copyProperties(medicoRequestDto, medicoModel);
-        medicoModel =  medicoRepository.save(medicoModel);
 
-        return new MedicoResponseDto(medicoModel);
+        medicoModel.setSenha(passwordEncoder.encode(medicoModel.getSenha()));
+
+        return new MedicoResponseDto(medicoRepository.save(medicoModel));
     }
 
 
@@ -71,8 +75,12 @@ public class MedicoService {
     public MedicoResponseDto updateMedico(UUID id, MedicoRequestDto medicoRequestDto) {
         MedicoModel medicoModel = medicoRepository.findById(id).orElseThrow(MedicoNotFoundException::new);
         BeanUtils.copyProperties(medicoRequestDto, medicoModel);
-        medicoModel =  medicoRepository.save(medicoModel);
-        return new MedicoResponseDto(medicoModel);
+
+        if(medicoRequestDto.senha() != null && !medicoRequestDto.senha().isBlank()) {
+            medicoModel.setSenha(passwordEncoder.encode(medicoRequestDto.senha()));
+        }
+
+        return new MedicoResponseDto(medicoRepository.save(medicoModel));
     }
 
 }

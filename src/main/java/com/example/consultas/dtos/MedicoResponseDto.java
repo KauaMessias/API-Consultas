@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.UUID;
 
-public record MedicoResponseDto(UUID id,String nome, String crm, String email, String telefone) {
+public record MedicoResponseDto(UUID id,String nome, String crm, String email, String senha, String telefone) {
 
     public MedicoResponseDto(MedicoModel medicoModel){
-        this(medicoModel.getId(), medicoModel.getNome(), medicoModel.getCrm(), medicoModel.getEmail(), medicoModel.getTelefone());
+        this(medicoModel.getId(), medicoModel.getNome(), medicoModel.getCrm(), medicoModel.getEmail(), medicoModel.getSenha(), medicoModel.getTelefone());
     }
 }

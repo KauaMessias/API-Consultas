@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/enderecoscliente")
+@RequestMapping("/cliente/endereco")
 public class ClienteEnderecoController {
 
     private final ClienteEnderecoService clienteEnderecoService;
