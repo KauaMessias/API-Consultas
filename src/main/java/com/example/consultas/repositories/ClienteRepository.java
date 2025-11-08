@@ -16,4 +16,10 @@ public interface ClienteRepository extends JpaRepository<ClienteModel, UUID> {
     Optional<ClienteModel> findByEmail(String email);
 
     List<ClienteModel> findByNomeContainingIgnoreCase(String nome);
+    
+    boolean existsByEmail(String email);
+    
+    boolean existsByCpf(String cpf);
+
+
 }

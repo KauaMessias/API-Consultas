@@ -2,6 +2,7 @@ package com.example.consultas.controllers;
 
 import com.example.consultas.dtos.ConsultaDto;
 import com.example.consultas.services.ConsultaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,31 +22,31 @@ public class ConsultaController {
 
 
     @PostMapping
-    public ResponseEntity<ConsultaDto> addConsulta(@RequestBody ConsultaDto consultaDto) {
+    public ResponseEntity<ConsultaDto> addConsulta(@RequestBody @Valid ConsultaDto consultaDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(consultaService.addConsulta(consultaDto));
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<ConsultaDto> getConsulta(@PathVariable UUID id) {
+    public ResponseEntity<ConsultaDto> getConsulta(@PathVariable(value = "id") UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(consultaService.getConsultaById(id));
     }
 
 
     @GetMapping("/medico/{medicoid}")
-    public ResponseEntity<List<ConsultaDto>> getConsultaByMedicoId(@PathVariable(value = "medicoid") UUID medicoid) {
-        return ResponseEntity.status(HttpStatus.OK).body(consultaService.getConsultaByMedicoId(medicoid));
+    public ResponseEntity<List<ConsultaDto>> getConsultaByMedicoId(@PathVariable(value = "medico_id") UUID medico_id) {
+        return ResponseEntity.status(HttpStatus.OK).body(consultaService.getConsultaByMedicoId(medico_id));
     }
 
 
     @GetMapping("/cliente/{clienteid}")
-    public ResponseEntity<List<ConsultaDto>> getConsultaByClienteId(@PathVariable(value = "clienteid") UUID clienteid) {
-        return ResponseEntity.status(HttpStatus.OK).body(consultaService.getConsultaByClienteId(clienteid));
+    public ResponseEntity<List<ConsultaDto>> getConsultaByClienteId(@PathVariable(value = "cliente_id") UUID cliente_id) {
+        return ResponseEntity.status(HttpStatus.OK).body(consultaService.getConsultaByClienteId(cliente_id));
     }
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<ConsultaDto> updateConsulta(@PathVariable UUID id, @RequestBody ConsultaDto consultaDto) {
+    public ResponseEntity<ConsultaDto> updateConsulta(@PathVariable(value = "id") UUID id, @RequestBody @Valid ConsultaDto consultaDto) {
         return ResponseEntity.status(HttpStatus.OK).body(consultaService.updateConsulta(id, consultaDto));
     }
 

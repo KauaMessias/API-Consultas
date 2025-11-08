@@ -17,4 +17,8 @@ public interface MedicoRepository extends JpaRepository<MedicoModel, UUID> {
     Optional<MedicoModel> findByEmail(String email);
 
     List<MedicoModel> findByNomeContainingIgnoreCase(String nome);
+
+    boolean existsByEmail(String email);
+    
+    boolean existsByCrm(String crm);
 }

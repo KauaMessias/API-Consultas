@@ -2,6 +2,7 @@ package com.example.consultas.controllers;
 
 import com.example.consultas.dtos.ClienteEnderecoDto;
 import com.example.consultas.services.ClienteEnderecoService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class ClienteEnderecoController {
 
 
     @PostMapping
-    public ResponseEntity<ClienteEnderecoDto> addClienteEndereco(@RequestBody ClienteEnderecoDto clienteEnderecoDto) {
+    public ResponseEntity<ClienteEnderecoDto> addClienteEndereco(@RequestBody @Valid ClienteEnderecoDto clienteEnderecoDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteEnderecoService.addClienteEndereco(clienteEnderecoDto));
     }
 
@@ -32,14 +33,14 @@ public class ClienteEnderecoController {
     }
 
 
-    @GetMapping("/cliente/{clienteid}")
-    public ResponseEntity<List<ClienteEnderecoDto>> getClienteEnderecos(@PathVariable(value = "clienteid") UUID clienteid) {
+    @GetMapping()
+    public ResponseEntity<List<ClienteEnderecoDto>> getClienteEnderecos(@RequestParam(value = "clienteid") UUID clienteid) {
         return ResponseEntity.status(HttpStatus.OK).body(clienteEnderecoService.getClienteEnderecoByClienteID(clienteid));
     }
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClienteEnderecoDto> updateClienteEndereco(@PathVariable(value = "id") UUID id, @RequestBody ClienteEnderecoDto clienteEnderecoDto) {
+    public ResponseEntity<ClienteEnderecoDto> updateClienteEndereco(@PathVariable(value = "id") UUID id, @Valid ClienteEnderecoDto clienteEnderecoDto) {
         return ResponseEntity.status(HttpStatus.OK).body(clienteEnderecoService.updateClienteEndereco(id, clienteEnderecoDto));
     }
 

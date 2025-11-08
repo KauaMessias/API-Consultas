@@ -2,11 +2,10 @@ package com.example.consultas.services;
 
 import com.example.consultas.dtos.ClienteRequestDto;
 import com.example.consultas.dtos.ClienteResponseDto;
-import com.example.consultas.dtos.MedicoResponseDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
 import com.example.consultas.models.ClienteModel;
-import com.example.consultas.models.MedicoModel;
 import com.example.consultas.repositories.ClienteRepository;
+import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +27,14 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponseDto addCliente(ClienteRequestDto clienteRequestDto){
+        if(clienteRepository.existsByEmail(clienteRequestDto.email())){
+            throw new EntityExistsException("Email já cadastrado.");
+        }
+
+        if(clienteRepository.existsByCpf(clienteRequestDto.cpf())){
+            throw new EntityExistsException("CPF já cadastrado.");
+        }
+
         ClienteModel clienteModel = new ClienteModel();
         BeanUtils.copyProperties(clienteRequestDto, clienteModel);
 
@@ -38,6 +45,18 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponseDto updateCliente(UUID id, ClienteRequestDto clienteRequestDto){
+        clienteRepository.findByEmail(clienteRequestDto.email()).ifPresent(cliente -> {
+            if (!cliente.getId().equals(id)) {
+                throw new EntityExistsException("Email já cadastrado.");
+            }
+        });
+
+        clienteRepository.findByCpf(clienteRequestDto.cpf()).ifPresent(cliente -> {
+            if (!cliente.getId().equals(id)) {
+                throw new EntityExistsException("CPF já cadastrado.");
+            }
+        });
+
         ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new);
         BeanUtils.copyProperties(clienteRequestDto, clienteModel, "senha");
 
