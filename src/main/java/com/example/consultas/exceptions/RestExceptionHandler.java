@@ -1,15 +1,12 @@
 package com.example.consultas.exceptions;
 
 import jakarta.persistence.EntityExistsException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,17 +32,15 @@ public class RestExceptionHandler {
     }
 
 
-    @ExceptionHandler(MedicoEnderecoNotFoundException.class)
-    public  ResponseEntity<String> handleMedicoEnderecoNotFound(MedicoEnderecoNotFoundException e){
+    @ExceptionHandler(EnderecoNotFoundException.class)
+    public  ResponseEntity<String> handleMedicoEnderecoNotFound(EnderecoNotFoundException e){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
-
-    @ExceptionHandler(ClienteEnderecoNotFoundException.class)
-    public ResponseEntity<String> handleClienteEnderecoNotFound(ClienteEnderecoNotFoundException e){
+    @ExceptionHandler(UsuarioNotFoundException.class)
+    public ResponseEntity<String> handleUsuarioNotFound(UsuarioNotFoundException e){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
-
 
     @ExceptionHandler(EntityExistsException.class)
     public ResponseEntity<String> handleEntityExists(EntityExistsException e){

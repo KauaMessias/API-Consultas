@@ -14,7 +14,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,6 +85,14 @@ public class ConsultaService {
         ClienteModel clienteModel = clienteRepository.findById(consultaDto.cliente_id()).orElseThrow(ClienteNotFoundException::new);
         consultaModel.setCliente(clienteModel);
 
+        if(consultaRepository.existsByMedico_IdAndDataConsultaBetween(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14))) {
+            throw new IllegalArgumentException("Médico já possui uma consulta no horário.");
+        }
+
+        if(consultaRepository.existsByCliente_IdAndDataConsultaBetween(consultaDto.cliente_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14))){
+            throw new IllegalArgumentException("Cliente já possui uma consulta no horário.");
+        }
+
         BeanUtils.copyProperties(consultaDto, consultaModel, "id", "medico", "cliente");
 
 
@@ -102,6 +109,14 @@ public class ConsultaService {
 
         ClienteModel clienteModel = clienteRepository.findById(consultaDto.cliente_id()).orElseThrow(ClienteNotFoundException::new);
         consultaModel.setCliente(clienteModel);
+
+        if(consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndIdNot(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())) {
+            throw new IllegalArgumentException("Médico já possui uma consulta no horário.");
+        }
+
+        if(consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndIdNot(consultaDto.cliente_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())){
+            throw new IllegalArgumentException("Cliente já possui uma consulta no horário.");
+        }
 
         BeanUtils.copyProperties(consultaDto, consultaModel, "id", "medico", "cliente");
 

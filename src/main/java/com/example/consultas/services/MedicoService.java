@@ -1,10 +1,13 @@
 package com.example.consultas.services;
 
+import com.example.consultas.dtos.*;
 import com.example.consultas.dtos.MedicoRequestDto;
 import com.example.consultas.dtos.MedicoResponseDto;
 import com.example.consultas.exceptions.MedicoNotFoundException;
+import com.example.consultas.models.*;
 import com.example.consultas.models.MedicoModel;
 import com.example.consultas.repositories.MedicoRepository;
+import com.example.consultas.repositories.UsuarioRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
@@ -13,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,10 +23,12 @@ public class MedicoService {
 
     private final MedicoRepository medicoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioRepository usuarioRepository;
 
-    public MedicoService(MedicoRepository medicoRepository, PasswordEncoder passwordEncoder) {
+    public MedicoService(MedicoRepository medicoRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, AuthorizationService authorizationService) {
         this.medicoRepository = medicoRepository;
         this.passwordEncoder = passwordEncoder;
+        this.usuarioRepository = usuarioRepository;
     }
 
 
@@ -37,45 +41,42 @@ public class MedicoService {
         return new MedicoResponseDto(medicoRepository.findByCrm(crm).orElseThrow(MedicoNotFoundException::new));
     }
 
-
-    public MedicoResponseDto getMedicoByEmail(String email) {
-        return new MedicoResponseDto(medicoRepository.findByEmail(email).orElseThrow(MedicoNotFoundException::new));
-    }
-
-
-    public List<MedicoResponseDto> getMedicoByNome(String nome) {
-        return medicoRepository.findByNomeContainingIgnoreCase(nome)
-                .stream().map(MedicoResponseDto::new)
-                .toList();
+    public Page<MedicoResponseDto> getMedicoByNome(Pageable pageable, String nome) {
+        return medicoRepository.findByNomeContainingIgnoreCase(pageable, nome).map(MedicoResponseDto::new);
     }
 
 
     public Page<MedicoResponseDto> getAllMedicos(Pageable pageable) {
         return medicoRepository.findAll(pageable).map(MedicoResponseDto::new);
-
     }
 
 
     @Transactional
     public void deleteMedico(UUID id) {
-        medicoRepository.delete(medicoRepository.findById(id).orElseThrow(MedicoNotFoundException::new));
+        MedicoModel medico = medicoRepository.findById(id).orElseThrow(MedicoNotFoundException::new);
+        UsuarioModel usuario = medico.getUsuario();
+
+        medicoRepository.delete(medico);
+        usuarioRepository.delete(usuario);
     }
 
 
     @Transactional
     public MedicoResponseDto addMedico(MedicoRequestDto medicoRequestDto) {
-        if(medicoRepository.existsByEmail(medicoRequestDto.email())) {
+
+        if (usuarioRepository.existsByEmail(medicoRequestDto.email())) {
             throw new EntityExistsException("Email já cadastrado.");
         }
 
-        if(medicoRepository.existsByCrm(medicoRequestDto.crm())) {
+        if (medicoRepository.existsByCrm(medicoRequestDto.crm())) {
             throw new EntityExistsException("CRM já cadastrado.");
         }
 
         MedicoModel medicoModel = new MedicoModel();
-        BeanUtils.copyProperties(medicoRequestDto, medicoModel);
+        BeanUtils.copyProperties(medicoRequestDto, medicoModel, "usuario", "senha", "email");
 
-        medicoModel.setSenha(passwordEncoder.encode(medicoRequestDto.senha()));
+        UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(medicoRequestDto.email(), passwordEncoder.encode(medicoRequestDto.senha()), Roles.MEDICO));
+        medicoModel.setUsuario(usuario);
 
         return new MedicoResponseDto(medicoRepository.save(medicoModel));
     }
@@ -83,24 +84,24 @@ public class MedicoService {
 
     @Transactional
     public MedicoResponseDto updateMedico(UUID id, MedicoRequestDto medicoRequestDto) {
-        medicoRepository.findByEmail(medicoRequestDto.email()).ifPresent(medico -> {
-            if (!medico.getId().equals(id)) {
+        MedicoModel medicoModel = medicoRepository.findById(id).orElseThrow(MedicoNotFoundException::new);
+        UsuarioModel usuario = medicoModel.getUsuario();
+
+        if (!medicoRequestDto.email().equals(usuario.getEmail())) {
+            if (usuarioRepository.existsByEmail(medicoRequestDto.email())) {
                 throw new EntityExistsException("Email já cadastrado.");
             }
-        });
+            usuario.setEmail(medicoRequestDto.email());
 
-        medicoRepository.findByCrm(medicoRequestDto.crm()).ifPresent(medico -> {
-            if (!medico.getId().equals(id)) {
-                throw new EntityExistsException("CRM já cadastrado.");
-            }
-        });
-
-        MedicoModel medicoModel = medicoRepository.findById(id).orElseThrow(MedicoNotFoundException::new);
-        BeanUtils.copyProperties(medicoRequestDto, medicoModel);
-
-        if(medicoRequestDto.senha() != null && !medicoRequestDto.senha().trim().isEmpty()){
-            medicoModel.setSenha(passwordEncoder.encode(medicoRequestDto.senha()));
         }
+
+        if (medicoRequestDto.senha() != null && !medicoRequestDto.senha().trim().isEmpty()) {
+            usuario.setSenha(passwordEncoder.encode(medicoRequestDto.senha()));
+        }
+
+        BeanUtils.copyProperties(medicoRequestDto, medicoModel, "usuario", "senha", "email", "crm");
+
+        usuarioRepository.save(usuario);
 
         return new MedicoResponseDto(medicoRepository.save(medicoModel));
     }

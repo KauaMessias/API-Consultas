@@ -5,23 +5,21 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.hateoas.RepresentationModel;
 
 import java.io.Serial;
-import java.io.Serializable;
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "TB_Enderecos_Cli")
-public class ClienteEnderecoModel extends RepresentationModel<ClienteEnderecoModel> implements Serializable {
+@NoArgsConstructor
+@Table(name = "TB_Enderecos")
+public class EnderecoModel {
     @Serial
     private static final long serialVersionUID = 1L;
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column(nullable = false)
     private String uf;
@@ -30,10 +28,13 @@ public class ClienteEnderecoModel extends RepresentationModel<ClienteEnderecoMod
     @Column(nullable = false)
     private String cep;
     @Column(nullable = false)
+    private String bairro;
+    @Column(nullable = false)
     private String rua;
     @Column(nullable = false)
     private String numero;
+
     @ManyToOne
-    @JoinColumn(name = "cliente_id", nullable = false)
-    private ClienteModel cliente;
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioModel usuario;
 }

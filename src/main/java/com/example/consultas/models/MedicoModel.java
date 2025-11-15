@@ -6,12 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.hateoas.RepresentationModel;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,31 +20,29 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "TB_Medicos")
-public class MedicoModel extends RepresentationModel<MedicoModel> implements Serializable {
+public class MedicoModel implements Serializable {
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column(nullable = false)
     private String nome;
     @Column(unique = true, nullable = false)
     private String crm;
-    @Column(unique = true, nullable = false)
-    private String email;
-    @Column(nullable = false)
-    private String senha;
     @Column(nullable = false)
     private String telefone;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @OneToMany(mappedBy = "medico",fetch = FetchType.LAZY)
-    private Set<MedicoEnderecoModel> enderecos = new HashSet<>();
+    @Column(nullable = false)
+    private String especialidade;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @OneToMany(mappedBy = "medico", fetch = FetchType.LAZY)
     private Set<ConsultaModel> consultas = new HashSet<>();
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id")
+    private UsuarioModel usuario;
 
 
 

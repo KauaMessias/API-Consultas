@@ -15,9 +15,9 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
 
     List<ConsultaModel> findByMedico_Crm(String medicoCrm);
 
-    List<ConsultaModel> findByCliente_Id(UUID id);
+    List<ConsultaModel> findByCliente_Id(UUID clienteId);
 
-    List<ConsultaModel> findByMedico_Id(UUID id);
+    List<ConsultaModel> findByMedico_Id(UUID medicoId);
 
     List<ConsultaModel> findByMedico_NomeContainingIgnoreCaseAndCliente_Cpf(String medicoNome, String clienteCpf);
 
@@ -29,4 +29,11 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
 
     List<ConsultaModel> findByMedico_CrmAndDataConsultaBetween(String medicoCrm, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd);
 
+    boolean existsByCliente_IdAndDataConsultaBetween(UUID clienteId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd);
+
+    boolean existsByMedico_IdAndDataConsultaBetween(UUID medicoId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd);
+
+    boolean existsByCliente_IdAndDataConsultaBetweenAndIdNot(UUID clienteId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd, UUID consultaId);
+
+    boolean existsByMedico_IdAndDataConsultaBetweenAndIdNot(UUID medicoId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd, UUID consultaId);
 }
