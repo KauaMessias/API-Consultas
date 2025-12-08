@@ -1,12 +1,13 @@
 package com.example.consultas.services;
 
-import com.example.consultas.dtos.ClienteRequestDto;
-import com.example.consultas.dtos.ClienteResponseDto;
+import com.example.consultas.dtos.cliente.ClienteRequestDto;
+import com.example.consultas.dtos.cliente.ClienteResponseDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
 import com.example.consultas.models.ClienteModel;
 import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.repositories.ClienteRepository;
+import com.example.consultas.repositories.EnderecoRepository;
 import com.example.consultas.repositories.UsuarioRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
@@ -24,26 +25,25 @@ public class ClienteService {
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoRepository enderecoRepository;
 
-    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository) {
+    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, EnderecoRepository enderecoRepository) {
         this.clienteRepository = clienteRepository;
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
+        this.enderecoRepository = enderecoRepository;
     }
 
     @Transactional
     public ClienteResponseDto addCliente(ClienteRequestDto clienteRequestDto) {
 
-        if (usuarioRepository.existsByEmail(clienteRequestDto.email())) {
-            throw new EntityExistsException("Email já cadastrado.");
-        }
+        validarEmail(clienteRequestDto.email());
 
         if (clienteRepository.existsByCpf(clienteRequestDto.cpf())) {
             throw new EntityExistsException("CPF já cadastrado.");
         }
 
-        ClienteModel clienteModel = new ClienteModel();
-        BeanUtils.copyProperties(clienteRequestDto, clienteModel, "usuario", "senha", "email");
+        ClienteModel clienteModel = clienteRequestDto.toEntity();
 
         UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(clienteRequestDto.email(), passwordEncoder.encode(clienteRequestDto.senha()), Roles.CLIENTE));
         clienteModel.setUsuario(usuario);
@@ -57,23 +57,18 @@ public class ClienteService {
         ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new);
         UsuarioModel usuario = clienteModel.getUsuario();
 
-        if (!clienteRequestDto.email().equals(usuario.getEmail())) {
-            if(usuarioRepository.existsByEmail(clienteRequestDto.email())) {
-                throw new EntityExistsException("Email já cadastrado.");
-            }
+        if (clienteRequestDto.email() != null && !clienteRequestDto.email().equals(usuario.getEmail())) {
+            validarEmail(clienteRequestDto.email());
             usuario.setEmail(clienteRequestDto.email());
-
         }
 
         if (clienteRequestDto.senha() != null && !clienteRequestDto.senha().trim().isEmpty()) {
             usuario.setSenha(passwordEncoder.encode(clienteRequestDto.senha()));
         }
 
-        BeanUtils.copyProperties(clienteRequestDto, clienteModel, "usuario", "senha", "email", "cpf");
-
         usuarioRepository.save(usuario);
 
-        return new ClienteResponseDto(clienteRepository.save(clienteModel));
+        return new ClienteResponseDto(clienteRepository.save(clienteRequestDto.updateEntity(clienteModel)));
     }
 
 
@@ -98,7 +93,14 @@ public class ClienteService {
         UsuarioModel usuario = cliente.getUsuario();
 
         clienteRepository.delete(cliente);
+        enderecoRepository.deleteByUsuario_Id(usuario.getId());
         usuarioRepository.delete(usuario);
+    }
+
+    private void validarEmail(String email) {
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new EntityExistsException("Email já cadastrado.");
+        }
     }
 
 }

@@ -28,11 +28,10 @@ public class EnderecoService {
 
     @Transactional
     public EnderecoDto addEndereco(EnderecoDto enderecoDto, UUID usuario_id) {
+        UsuarioModel usuario = usuarioRepository.findById(usuario_id)
+                .orElseThrow(UsuarioNotFoundException::new);
 
-        UsuarioModel usuario = usuarioRepository.findById(usuario_id).orElseThrow(UsuarioNotFoundException::new);
-
-        EnderecoModel endereco = new EnderecoModel();
-        BeanUtils.copyProperties(enderecoDto, endereco, "id", "usuario");
+        EnderecoModel endereco = enderecoDto.toEntity();
 
         endereco.setUsuario(usuario);
 
@@ -41,25 +40,29 @@ public class EnderecoService {
 
     @Transactional
     public EnderecoDto updateEndereco(UUID id, EnderecoDto enderecoDto) {
-        EnderecoModel endereco = enderecoRepository.findById(id).orElseThrow(EnderecoNotFoundException::new);
+        EnderecoModel endereco = enderecoRepository.findById(id)
+                .orElseThrow(EnderecoNotFoundException::new);
 
-        BeanUtils.copyProperties(enderecoDto, endereco, "id", "usuario");
+        enderecoDto.updateEntity(endereco);
 
         return new EnderecoDto(enderecoRepository.save(endereco));
     }
 
 
     public EnderecoDto getEndereco(UUID id) {
-        return new EnderecoDto(enderecoRepository.findById(id).orElseThrow(EnderecoNotFoundException::new));
+        return new EnderecoDto(enderecoRepository.findById(id)
+                .orElseThrow(EnderecoNotFoundException::new));
     }
 
     public Page<EnderecoDto> getAllEndereco(UUID usuario_id, Pageable pageable) {
-        return enderecoRepository.getAllByUsuario_Id(usuario_id, pageable).map(EnderecoDto::new);
+        return enderecoRepository.findAllByUsuario_Id(usuario_id, pageable).map(EnderecoDto::new);
     }
 
     @Transactional
     public void deleteEndereco(UUID id) {
-        EnderecoModel endereco = enderecoRepository.findById(id).orElseThrow(EnderecoNotFoundException::new);
+        EnderecoModel endereco = enderecoRepository.findById(id)
+                .orElseThrow(EnderecoNotFoundException::new);
+
         enderecoRepository.delete(endereco);
     }
 }

@@ -45,7 +45,6 @@ public class EnderecoController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@enderecoAuthz.autorizado(#id, authentication)")
     public ResponseEntity<EnderecoDto> encontrarEndereco(@PathVariable(value = "id") UUID id) {
         return ResponseEntity.ok().body(enderecoService.getEndereco(id));
     }
@@ -64,7 +63,7 @@ public class EnderecoController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@enderecoAuthz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoEndereco(#id, authentication)")
     public ResponseEntity<EntityModel<EnderecoDto>> editarEndereco(@PathVariable(value = "id") UUID id, @RequestBody @Valid EnderecoDto enderecoDto) {
         enderecoDto = enderecoService.updateEndereco(id, enderecoDto);
 
@@ -75,7 +74,7 @@ public class EnderecoController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@enderecoAuthz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoEndereco(#id, authentication)")
     public ResponseEntity<Void> deletarEndereco(@PathVariable(value = "id") UUID id) {
         enderecoService.deleteEndereco(id);
         return ResponseEntity.noContent().build();

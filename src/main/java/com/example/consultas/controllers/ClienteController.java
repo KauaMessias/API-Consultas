@@ -1,8 +1,7 @@
 package com.example.consultas.controllers;
 
-import com.example.consultas.dtos.ClienteRequestDto;
-import com.example.consultas.dtos.ClienteResponseDto;
-import com.example.consultas.models.UsuarioModel;
+import com.example.consultas.dtos.cliente.ClienteRequestDto;
+import com.example.consultas.dtos.cliente.ClienteResponseDto;
 import com.example.consultas.services.ClienteService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -15,11 +14,9 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.security.Principal;
 import java.util.UUID;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -48,7 +45,7 @@ public class ClienteController {
 
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoCliente(#id, authentication)")
     public ResponseEntity<EntityModel<ClienteResponseDto>> getClienteById(@PathVariable(value = "id") UUID id) {
         EntityModel<ClienteResponseDto> clienteDtoEntity = EntityModel.of(clienteService.getClienteById(id));
         clienteDtoEntity.add(linkTo(methodOn(ClienteController.class).getAllClientes(0, 10)).withRel("all-clientes"));
@@ -76,7 +73,7 @@ public class ClienteController {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoCliente(#id, authentication)")
     public ResponseEntity<EntityModel<ClienteResponseDto>> updateCliente(@PathVariable(value = "id") UUID id, @RequestBody @Valid ClienteRequestDto clienteRequestDto) {
         EntityModel<ClienteResponseDto> clienteDtoEntity = EntityModel.of(clienteService.updateCliente(id, clienteRequestDto));
         clienteDtoEntity.add(
@@ -89,7 +86,7 @@ public class ClienteController {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoCliente(#id, authentication)")
     public ResponseEntity<Void> deleteCliente(@PathVariable(value = "id") UUID id) {
         clienteService.deleteCliente(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

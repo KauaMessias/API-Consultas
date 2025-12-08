@@ -1,4 +1,4 @@
-package com.example.consultas.dtos;
+package com.example.consultas.dtos.medico;
 
 import com.example.consultas.models.MedicoModel;
 

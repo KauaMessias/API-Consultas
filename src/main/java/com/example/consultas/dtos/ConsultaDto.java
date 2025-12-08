@@ -13,4 +13,15 @@ public record ConsultaDto(UUID id, @NotNull @Future LocalDateTime dataConsulta, 
    public ConsultaDto(ConsultaModel consultaModel){
        this(consultaModel.getId(), consultaModel.getDataConsulta(), consultaModel.getTipoConsulta(), consultaModel.getDescricaoConsulta(), consultaModel.getMedico().getId(), consultaModel.getCliente().getId());
    }
+
+   public ConsultaModel toEntity() {
+       return new ConsultaModel(null, dataConsulta, tipoConsulta, descricaoConsulta, null, null);
+   }
+
+   public ConsultaModel updateEntity(ConsultaModel consulta) {
+       consulta.setDataConsulta(dataConsulta);
+       consulta.setTipoConsulta(tipoConsulta);
+       consulta.setDescricaoConsulta(descricaoConsulta);
+       return consulta;
+   }
 }

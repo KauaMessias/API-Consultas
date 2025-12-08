@@ -1,11 +1,11 @@
 package com.example.consultas.services;
 
-import com.example.consultas.dtos.*;
-import com.example.consultas.dtos.MedicoRequestDto;
-import com.example.consultas.dtos.MedicoResponseDto;
+import com.example.consultas.dtos.medico.MedicoRequestDto;
+import com.example.consultas.dtos.medico.MedicoResponseDto;
 import com.example.consultas.exceptions.MedicoNotFoundException;
 import com.example.consultas.models.*;
 import com.example.consultas.models.MedicoModel;
+import com.example.consultas.repositories.EnderecoRepository;
 import com.example.consultas.repositories.MedicoRepository;
 import com.example.consultas.repositories.UsuarioRepository;
 import jakarta.persistence.EntityExistsException;
@@ -24,11 +24,13 @@ public class MedicoService {
     private final MedicoRepository medicoRepository;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
+    private final EnderecoRepository enderecoRepository;
 
-    public MedicoService(MedicoRepository medicoRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, AuthorizationService authorizationService) {
+    public MedicoService(MedicoRepository medicoRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, EnderecoRepository enderecoRepository) {
         this.medicoRepository = medicoRepository;
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
+        this.enderecoRepository = enderecoRepository;
     }
 
 
@@ -56,7 +58,9 @@ public class MedicoService {
         MedicoModel medico = medicoRepository.findById(id).orElseThrow(MedicoNotFoundException::new);
         UsuarioModel usuario = medico.getUsuario();
 
+
         medicoRepository.delete(medico);
+        enderecoRepository.deleteByUsuario_Id(usuario.getId());
         usuarioRepository.delete(usuario);
     }
 
@@ -64,16 +68,13 @@ public class MedicoService {
     @Transactional
     public MedicoResponseDto addMedico(MedicoRequestDto medicoRequestDto) {
 
-        if (usuarioRepository.existsByEmail(medicoRequestDto.email())) {
-            throw new EntityExistsException("Email já cadastrado.");
-        }
+        validarEmail(medicoRequestDto.email());
 
         if (medicoRepository.existsByCrm(medicoRequestDto.crm())) {
             throw new EntityExistsException("CRM já cadastrado.");
         }
 
-        MedicoModel medicoModel = new MedicoModel();
-        BeanUtils.copyProperties(medicoRequestDto, medicoModel, "usuario", "senha", "email");
+        MedicoModel medicoModel = medicoRequestDto.toEntity();
 
         UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(medicoRequestDto.email(), passwordEncoder.encode(medicoRequestDto.senha()), Roles.MEDICO));
         medicoModel.setUsuario(usuario);
@@ -88,9 +89,7 @@ public class MedicoService {
         UsuarioModel usuario = medicoModel.getUsuario();
 
         if (!medicoRequestDto.email().equals(usuario.getEmail())) {
-            if (usuarioRepository.existsByEmail(medicoRequestDto.email())) {
-                throw new EntityExistsException("Email já cadastrado.");
-            }
+            validarEmail(medicoRequestDto.email());
             usuario.setEmail(medicoRequestDto.email());
 
         }
@@ -99,11 +98,15 @@ public class MedicoService {
             usuario.setSenha(passwordEncoder.encode(medicoRequestDto.senha()));
         }
 
-        BeanUtils.copyProperties(medicoRequestDto, medicoModel, "usuario", "senha", "email", "crm");
-
         usuarioRepository.save(usuario);
 
-        return new MedicoResponseDto(medicoRepository.save(medicoModel));
+        return new MedicoResponseDto(medicoRepository.save(medicoRequestDto.updateEntity(medicoModel)));
+    }
+
+    private void validarEmail(String email) {
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new EntityExistsException("Email já cadastrado.");
+        }
     }
 
 }

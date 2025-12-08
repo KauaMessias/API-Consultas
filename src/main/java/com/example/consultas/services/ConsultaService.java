@@ -2,6 +2,7 @@ package com.example.consultas.services;
 
 import com.example.consultas.dtos.ConsultaDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
+import com.example.consultas.exceptions.ConflitoConsultaException;
 import com.example.consultas.exceptions.ConsultaNotFoundException;
 import com.example.consultas.exceptions.MedicoNotFoundException;
 import com.example.consultas.models.ClienteModel;
@@ -12,6 +13,8 @@ import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.MedicoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -54,19 +57,15 @@ public class ConsultaService {
                 .toList();
     }
 
-    public List<ConsultaDto> getConsultaByMedicoId(UUID id) {
-        return consultaRepository.findByMedico_Id(id)
-                .stream()
-                .map(ConsultaDto::new)
-                .toList();
+    public Page<ConsultaDto> getConsultaByMedicoId(UUID id, Pageable pageable) {
+        return consultaRepository.findByMedico_Id(id, pageable)
+                .map(ConsultaDto::new);
     }
 
 
-    public List<ConsultaDto> getConsultaByClienteId(UUID id) {
-        return consultaRepository.findByCliente_Id(id)
-                .stream()
-                .map(ConsultaDto::new)
-                .toList();
+    public Page<ConsultaDto> getConsultaByClienteId(UUID id, Pageable pageable) {
+        return consultaRepository.findByCliente_Id(id, pageable)
+                .map(ConsultaDto::new);
     }
 
 
@@ -77,7 +76,7 @@ public class ConsultaService {
 
     @Transactional
     public ConsultaDto addConsulta(ConsultaDto consultaDto) {
-        ConsultaModel consultaModel = new ConsultaModel();
+        ConsultaModel consultaModel = consultaDto.toEntity();
 
         MedicoModel medicoModel = medicoRepository.findById(consultaDto.medico_id()).orElseThrow(MedicoNotFoundException::new);
         consultaModel.setMedico(medicoModel);
@@ -86,15 +85,12 @@ public class ConsultaService {
         consultaModel.setCliente(clienteModel);
 
         if(consultaRepository.existsByMedico_IdAndDataConsultaBetween(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14))) {
-            throw new IllegalArgumentException("Médico já possui uma consulta no horário.");
+            throw new ConflitoConsultaException("Médico já possui uma consulta no horário.");
         }
 
         if(consultaRepository.existsByCliente_IdAndDataConsultaBetween(consultaDto.cliente_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14))){
-            throw new IllegalArgumentException("Cliente já possui uma consulta no horário.");
+            throw new ConflitoConsultaException("Cliente já possui uma consulta no horário.");
         }
-
-        BeanUtils.copyProperties(consultaDto, consultaModel, "id", "medico", "cliente");
-
 
         return new ConsultaDto(consultaRepository.save(consultaModel));
     }
@@ -104,22 +100,15 @@ public class ConsultaService {
     public ConsultaDto updateConsulta(UUID id, ConsultaDto consultaDto) {
         ConsultaModel consultaModel = consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new);
 
-        MedicoModel medicoModel = medicoRepository.findById(consultaDto.medico_id()).orElseThrow(MedicoNotFoundException::new);
-        consultaModel.setMedico(medicoModel);
-
-        ClienteModel clienteModel = clienteRepository.findById(consultaDto.cliente_id()).orElseThrow(ClienteNotFoundException::new);
-        consultaModel.setCliente(clienteModel);
-
-        if(consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndIdNot(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())) {
-            throw new IllegalArgumentException("Médico já possui uma consulta no horário.");
+        if(consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndIdNot(consultaModel.getMedico().getId(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())) {
+            throw new ConflitoConsultaException();
         }
 
-        if(consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndIdNot(consultaDto.cliente_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())){
-            throw new IllegalArgumentException("Cliente já possui uma consulta no horário.");
+        if(consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndIdNot(consultaModel.getCliente().getId(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())){
+            throw new ConflitoConsultaException();
         }
 
-        BeanUtils.copyProperties(consultaDto, consultaModel, "id", "medico", "cliente");
-
+        consultaDto.updateEntity(consultaModel);
 
         return new ConsultaDto(consultaRepository.save(consultaModel));
     }

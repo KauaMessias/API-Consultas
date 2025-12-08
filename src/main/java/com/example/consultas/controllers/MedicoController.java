@@ -1,7 +1,7 @@
 package com.example.consultas.controllers;
 
-import com.example.consultas.dtos.MedicoRequestDto;
-import com.example.consultas.dtos.MedicoResponseDto;
+import com.example.consultas.dtos.medico.MedicoRequestDto;
+import com.example.consultas.dtos.medico.MedicoResponseDto;
 import com.example.consultas.services.MedicoService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -47,7 +47,6 @@ public class MedicoController {
 
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authz.autorizado(#id, authentication)")
     public ResponseEntity<EntityModel<MedicoResponseDto>> getMedicoById(@PathVariable(value = "id") UUID id) {
         EntityModel<MedicoResponseDto> medicoDtoEntity = EntityModel.of(medicoService.getMedicoById(id));
         medicoDtoEntity.add(linkTo(methodOn(MedicoController.class).getAllMedicos(0, 10)).withRel("all-medicos"));
@@ -57,7 +56,7 @@ public class MedicoController {
 
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<MedicoResponseDto>>> getAllMedicos(@RequestParam(defaultValue = "0", value = "page") @Min(0) int page,
-                                                                                         @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(50) int size) {
+                                                                                         @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(25) int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<MedicoResponseDto> medicoResponseDtos = medicoService.getAllMedicos(pageable);
@@ -73,7 +72,7 @@ public class MedicoController {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoMedico(#id, authentication)")
     public ResponseEntity<EntityModel<MedicoResponseDto>> updateMedico(@PathVariable(value = "id") UUID id, @RequestBody @Valid MedicoRequestDto medicoRequestDto) {
         EntityModel<MedicoResponseDto> medicoDtoEntity = EntityModel.of(medicoService.updateMedico(id, medicoRequestDto));
         medicoDtoEntity.add(linkTo(methodOn(MedicoController.class).getMedicoById(id)).withSelfRel());
@@ -83,7 +82,7 @@ public class MedicoController {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authz.autorizado(#id, authentication)")
+    @PreAuthorize("@authz.acessoMedico(#id, authentication)")
     public ResponseEntity<Void> deleteMedico(@PathVariable(value = "id") UUID id) {
         medicoService.deleteMedico(id);
 

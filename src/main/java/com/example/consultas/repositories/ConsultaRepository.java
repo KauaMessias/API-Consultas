@@ -1,6 +1,9 @@
 package com.example.consultas.repositories;
 
 import com.example.consultas.models.ConsultaModel;
+import com.example.consultas.models.UsuarioModel;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,9 +18,9 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
 
     List<ConsultaModel> findByMedico_Crm(String medicoCrm);
 
-    List<ConsultaModel> findByCliente_Id(UUID clienteId);
+    Page<ConsultaModel> findByCliente_Id(UUID clienteId, Pageable pageable);
 
-    List<ConsultaModel> findByMedico_Id(UUID medicoId);
+    Page<ConsultaModel> findByMedico_Id(UUID medicoId, Pageable pageable);
 
     List<ConsultaModel> findByMedico_NomeContainingIgnoreCaseAndCliente_Cpf(String medicoNome, String clienteCpf);
 
@@ -36,4 +39,14 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
     boolean existsByCliente_IdAndDataConsultaBetweenAndIdNot(UUID clienteId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd, UUID consultaId);
 
     boolean existsByMedico_IdAndDataConsultaBetweenAndIdNot(UUID medicoId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd, UUID consultaId);
+
+    boolean existsByMedico_Usuario_IdAndCliente_Id(UUID UsuarioId, UUID clienteId);
+
+    boolean existsByCliente_Usuario_Id(UUID clienteUsuarioId);
+
+    boolean existsByIdAndMedico_Usuario_Id(UUID id, UUID medicoUsuarioId);
+
+    boolean existsByIdAndCliente_Usuario(UUID id, UsuarioModel clienteUsuario);
+
+    boolean existsByIdAndCliente_Usuario_Id(UUID id, UUID clienteUsuarioId);
 }

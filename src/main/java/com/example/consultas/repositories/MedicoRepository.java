@@ -20,4 +20,6 @@ public interface MedicoRepository extends JpaRepository<MedicoModel, UUID> {
     boolean existsByIdAndUsuario_Id(UUID id, UUID usuarioId);
     
     boolean existsByCrm(String crm);
+
+    boolean existsByUsuario_Id(UUID usuarioId);
 }

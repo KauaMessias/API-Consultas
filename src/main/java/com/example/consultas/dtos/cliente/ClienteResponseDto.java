@@ -1,4 +1,4 @@
-package com.example.consultas.dtos;
+package com.example.consultas.dtos.cliente;
 
 import com.example.consultas.models.ClienteModel;
 
