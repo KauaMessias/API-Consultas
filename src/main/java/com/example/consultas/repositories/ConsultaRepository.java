@@ -1,6 +1,7 @@
 package com.example.consultas.repositories;
 
 import com.example.consultas.models.ConsultaModel;
+import com.example.consultas.models.Status;
 import com.example.consultas.models.UsuarioModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,11 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
 
     List<ConsultaModel> findByMedico_CrmAndDataConsultaBetween(String medicoCrm, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd);
 
+    List<ConsultaModel> findByMedico_IdAndStatusNot(UUID medicoId, Status status);
+
+    List<ConsultaModel> findByCliente_IdAndStatusNot(UUID clienteId, Status status);
+
+
     boolean existsByCliente_IdAndDataConsultaBetween(UUID clienteId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd);
 
     boolean existsByMedico_IdAndDataConsultaBetween(UUID medicoId, LocalDateTime dataConsultaStart, LocalDateTime dataConsultaEnd);
@@ -49,4 +55,10 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
     boolean existsByIdAndCliente_Usuario(UUID id, UsuarioModel clienteUsuario);
 
     boolean existsByIdAndCliente_Usuario_Id(UUID id, UUID clienteUsuarioId);
+
+    void deleteByMedico_Id(UUID medicoId);
+
+    void deleteByCliente_Id(UUID clienteId);
+
+
 }

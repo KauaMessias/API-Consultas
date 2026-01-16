@@ -1,5 +1,7 @@
 package com.example.consultas.security;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,9 +20,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity()
 @EnableMethodSecurity(prePostEnabled = true)
+@SecurityScheme(name = SecurityConfigurations.SECURITY, type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 public class SecurityConfigurations {
 
     private final SecurityFilter securityFilter;
+
+    public static final String SECURITY = "bearerAuth";
 
     public SecurityConfigurations(SecurityFilter securityFilter) {
         this.securityFilter = securityFilter;
@@ -42,11 +47,15 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/v1/medicos").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/v1/medicos/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.POST, "/api/v1/consultas").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/v1/clientes/**").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/clientes/**").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/clientes/**").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/medicos/**").hasRole("MEDICO")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/medicos/**").hasRole("MEDICO")
+                        .requestMatchers( "/", "/error", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-ui/index.html").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

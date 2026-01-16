@@ -1,50 +1,45 @@
 package com.example.consultas.exceptions;
 
 import jakarta.persistence.EntityExistsException;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class RestExceptionHandler {
 
 
-    @ExceptionHandler(ClienteNotFoundException.class)
-    public ResponseEntity<String> handleClienteNotFound(ClienteNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    @ExceptionHandler(exception = {ClienteNotFoundException.class, MedicoNotFoundException.class, ConsultaNotFoundException.class, EnderecoNotFoundException.class, UsuarioNotFoundException.class})
+    public ResponseEntity<ErrorDto> handleNotFoundException(RuntimeException e, HttpServletRequest request) {
+        log.error(e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(LocalDateTime.now(), HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND.name(), e.getMessage(), request.getRequestURI()));
     }
 
-
-    @ExceptionHandler(MedicoNotFoundException.class)
-    public ResponseEntity<String> handleMedicoNotFound(MedicoNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    @ExceptionHandler(UsuarioInativoException.class)
+    public ResponseEntity<ErrorDto> handleUsuarioInativoException(UsuarioInativoException e, HttpServletRequest request) {
+        log.error(e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.name(), e.getMessage(), request.getRequestURI()));
     }
 
-
-    @ExceptionHandler(ConsultaNotFoundException.class)
-    public ResponseEntity<String> handleConsultaNotFound(ConsultaNotFoundException e){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    }
-
-
-    @ExceptionHandler(EnderecoNotFoundException.class)
-    public  ResponseEntity<String> handleMedicoEnderecoNotFound(EnderecoNotFoundException e){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    }
-
-    @ExceptionHandler(UsuarioNotFoundException.class)
-    public ResponseEntity<String> handleUsuarioNotFound(UsuarioNotFoundException e){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    @ExceptionHandler(ConflitoConsultaException.class)
+    public ResponseEntity<ErrorDto> handleConflitoConsulta(ConflitoConsultaException e, HttpServletRequest request) {
+        log.error(e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDto(LocalDateTime.now(), HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.name(), e.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(EntityExistsException.class)
-    public ResponseEntity<String> handleEntityExists(EntityExistsException e){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    public ResponseEntity<ErrorDto> handleEntityExists(EntityExistsException e, HttpServletRequest request) {
+        log.error(e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDto(LocalDateTime.now(), HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.name(), e.getMessage(), request.getRequestURI()));
     }
 
 

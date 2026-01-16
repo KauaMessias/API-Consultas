@@ -1,6 +1,7 @@
-package com.example.consultas.dtos;
+package com.example.consultas.dtos.consulta;
 
 import com.example.consultas.models.ConsultaModel;
+import com.example.consultas.models.Status;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,14 +9,14 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record ConsultaDto(UUID id, @NotNull @Future LocalDateTime dataConsulta, @NotBlank String tipoConsulta, @NotBlank String descricaoConsulta, @NotNull UUID medico_id, @NotNull UUID cliente_id) {
+public record ConsultaDto(@NotNull @Future LocalDateTime dataConsulta, @NotBlank String tipoConsulta, @NotBlank String descricaoConsulta, @NotNull UUID medico_id, @NotNull UUID cliente_id) {
 
    public ConsultaDto(ConsultaModel consultaModel){
-       this(consultaModel.getId(), consultaModel.getDataConsulta(), consultaModel.getTipoConsulta(), consultaModel.getDescricaoConsulta(), consultaModel.getMedico().getId(), consultaModel.getCliente().getId());
+       this(consultaModel.getDataConsulta(), consultaModel.getTipoConsulta(), consultaModel.getDescricaoConsulta(), consultaModel.getMedico().getId(), consultaModel.getCliente().getId());
    }
 
    public ConsultaModel toEntity() {
-       return new ConsultaModel(null, dataConsulta, tipoConsulta, descricaoConsulta, null, null);
+       return new ConsultaModel(null, dataConsulta, tipoConsulta, descricaoConsulta, null, null, null);
    }
 
    public ConsultaModel updateEntity(ConsultaModel consulta) {

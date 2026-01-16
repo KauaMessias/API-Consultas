@@ -8,7 +8,7 @@ import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.repositories.EnderecoRepository;
 import com.example.consultas.repositories.UsuarioRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.BeanUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,10 +16,12 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class EnderecoService {
 
     private final EnderecoRepository enderecoRepository;
     private final UsuarioRepository usuarioRepository;
+
 
     public EnderecoService(EnderecoRepository enderecoRepository, UsuarioRepository usuarioRepository) {
         this.enderecoRepository = enderecoRepository;
@@ -28,20 +30,32 @@ public class EnderecoService {
 
     @Transactional
     public EnderecoDto addEndereco(EnderecoDto enderecoDto, UUID usuario_id) {
+        log.info("Criando um novo endereço para o usuário de id {}", usuario_id);
         UsuarioModel usuario = usuarioRepository.findById(usuario_id)
-                .orElseThrow(UsuarioNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.warn("Usuário de id {} não encontrado", usuario_id);
+                    return new UsuarioNotFoundException();
+                });
 
         EnderecoModel endereco = enderecoDto.toEntity();
 
         endereco.setUsuario(usuario);
 
-        return new EnderecoDto(enderecoRepository.save(endereco));
+        endereco = enderecoRepository.save(endereco);
+        log.info("Endereço com o id {} criado com sucesso", endereco.getId());
+
+        return new EnderecoDto(endereco);
     }
 
     @Transactional
     public EnderecoDto updateEndereco(UUID id, EnderecoDto enderecoDto) {
+        log.info("Atualizando o endereço com o id {}", id);
+
         EnderecoModel endereco = enderecoRepository.findById(id)
-                .orElseThrow(EnderecoNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.warn("Endereço com o id {} não encontrado", id);
+                    return new EnderecoNotFoundException();
+                });
 
         enderecoDto.updateEntity(endereco);
 
@@ -50,19 +64,40 @@ public class EnderecoService {
 
 
     public EnderecoDto getEndereco(UUID id) {
-        return new EnderecoDto(enderecoRepository.findById(id)
-                .orElseThrow(EnderecoNotFoundException::new));
+        log.info("Buscando o endereço de id {}", id);
+
+        EnderecoModel endereco = enderecoRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Endereço com o id {} não encontrado", id);
+                    return new EnderecoNotFoundException();
+                });
+
+        log.info("Endereço encontrado com sucesso");
+        return new EnderecoDto(endereco);
     }
 
-    public Page<EnderecoDto> getAllEndereco(UUID usuario_id, Pageable pageable) {
-        return enderecoRepository.findAllByUsuario_Id(usuario_id, pageable).map(EnderecoDto::new);
+    public Page<EnderecoDto> getAllEnderecoByUsuarioId(UUID usuario_id, Pageable pageable) {
+        log.info("Buscando endereços do usuário com o id {}", usuario_id);
+
+        var enderecos = enderecoRepository.findAllByUsuario_Id(usuario_id, pageable).map(EnderecoDto::new);
+
+        log.info("{} endereços encontrados para o usuário com id {}", enderecos.getTotalElements(), usuario_id);
+
+        return enderecos;
     }
 
     @Transactional
     public void deleteEndereco(UUID id) {
+        log.info("Deletando o endereço com o id {}", id);
+
         EnderecoModel endereco = enderecoRepository.findById(id)
-                .orElseThrow(EnderecoNotFoundException::new);
+                .orElseThrow(() -> {
+                    log.warn("Endereco com o id {} não encontrado", id);
+                    return new EnderecoNotFoundException();
+                });
 
         enderecoRepository.delete(endereco);
+
+        log.info("Endereço deletado com sucesso");
     }
 }

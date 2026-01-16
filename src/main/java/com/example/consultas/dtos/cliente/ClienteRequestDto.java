@@ -15,7 +15,6 @@ public record ClienteRequestDto(@NotBlank String nome, @NotBlank @Email String e
 
     public ClienteModel updateEntity(ClienteModel cliente){
         cliente.setNome(nome);
-        cliente.setCpf(cpf);
         cliente.setTelefone(telefone);
         return cliente;
     }

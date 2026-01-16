@@ -162,7 +162,7 @@ class EnderecoServiceTest {
         Page<EnderecoModel> enderecos = new PageImpl<>(List.of(endereco1 ,endereco2));
         when(enderecoRepository.findAllByUsuario_Id(usuario.getId(), pageable)).thenReturn(enderecos);
 
-        Page<EnderecoDto> result = enderecoService.getAllEndereco(usuario.getId(), pageable);
+        Page<EnderecoDto> result = enderecoService.getAllEnderecoByUsuarioId(usuario.getId(), pageable);
 
         verify(enderecoRepository).findAllByUsuario_Id(usuario.getId(), pageable);
 
@@ -186,7 +186,7 @@ class EnderecoServiceTest {
 
         when(enderecoRepository.findAllByUsuario_Id(usuario.getId(), pageable)).thenReturn(enderecos);
 
-        Page<EnderecoDto> result = enderecoService.getAllEndereco(usuario.getId(), pageable);
+        Page<EnderecoDto> result = enderecoService.getAllEnderecoByUsuarioId(usuario.getId(), pageable);
 
         verify(enderecoRepository).findAllByUsuario_Id(usuario.getId(), pageable);
 
@@ -228,7 +228,7 @@ class EnderecoServiceTest {
     }
 
     UsuarioModel gerarUsuario() {
-        return new UsuarioModel(UUID.randomUUID(),"carlos@gmail.com","12345", Roles.MEDICO, null);
+        return new UsuarioModel(UUID.randomUUID(),"carlos@gmail.com","12345", Roles.MEDICO, true, null);
     }
 
     EnderecoModel gerarEndereco() {

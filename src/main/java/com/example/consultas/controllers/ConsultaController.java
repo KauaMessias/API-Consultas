@@ -1,7 +1,15 @@
 package com.example.consultas.controllers;
 
-import com.example.consultas.dtos.ConsultaDto;
+import com.example.consultas.dtos.consulta.ConsultaDto;
+import com.example.consultas.dtos.consulta.ConsultaResponseDto;
+import com.example.consultas.dtos.consulta.ConsultaUpdateDto;
+import com.example.consultas.models.Status;
+import com.example.consultas.security.SecurityConfigurations;
 import com.example.consultas.services.ConsultaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +28,8 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/api/v1/consultas")
+@Tag(name = "Consultas", description = "Controller usado para o gerenciamento de consultas")
+@SecurityRequirement(name = SecurityConfigurations.SECURITY)
 public class ConsultaController {
 
     private final ConsultaService consultaService;
@@ -30,9 +40,15 @@ public class ConsultaController {
 
 
     @PostMapping
-    public ResponseEntity<EntityModel<ConsultaDto>> addConsulta(@RequestBody @Valid ConsultaDto consultaDto) {
-        ConsultaDto consulta = consultaService.addConsulta(consultaDto);
-        EntityModel<ConsultaDto> consultaEntity = EntityModel.of(consulta).add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel());
+    @Operation(summary = "Criar consulta", description = "Método usado para criar uma consulta através de dados vindos da requisição")
+    @ApiResponse(responseCode = "201", description = "Consulta criada com sucesso")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponse(responseCode = "404", description = "Cliente ou Médico não encontrado")
+    @ApiResponse(responseCode = "409", description = "Conflito no horário da consulta")
+    @ApiResponse(responseCode = "500", description = "Erro no servidor")
+    public ResponseEntity<EntityModel<ConsultaResponseDto>> addConsulta(@RequestBody @Valid ConsultaDto consultaDto) {
+        ConsultaResponseDto consulta = consultaService.addConsulta(consultaDto);
+        EntityModel<ConsultaResponseDto> consultaEntity = EntityModel.of(consulta).add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel());
         URI local = linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).toUri();
 
         return ResponseEntity.created(local).body(consultaEntity);
@@ -40,19 +56,29 @@ public class ConsultaController {
 
 
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar consulta", description = "Método usado para buscar uma consulta através de seu id")
+    @ApiResponse(responseCode = "200", description = "Consulta encontrada com sucesso")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
+    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoConsulta(#id, authentication)")
-    public ResponseEntity<ConsultaDto> getConsulta(@PathVariable(value = "id") UUID id) {
+    public ResponseEntity<ConsultaResponseDto> getConsulta(@PathVariable(value = "id") UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(consultaService.getConsultaById(id));
     }
 
 
     @GetMapping("/medico/{medico_id}")
+    @Operation(summary = "Buscar consultas de um médico", description = "Método usado para buscar as consulta de um médico através de seu id")
+    @ApiResponse(responseCode = "200", description = "Consultas encontradas com sucesso")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponse(responseCode = "404", description = "Médico não encontrado")
+    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoMedico(#medico_id, authentication)")
-    public ResponseEntity<Page<EntityModel<ConsultaDto>>> getConsultaByMedicoId(@PathVariable(value = "medico_id") UUID medico_id, @RequestParam(value = "page", defaultValue = "0") int page,
+    public ResponseEntity<Page<EntityModel<ConsultaResponseDto>>> getConsultaByMedicoId(@PathVariable(value = "medico_id") UUID medico_id, @RequestParam(value = "page", defaultValue = "0") int page,
                                                                    @RequestParam(value = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<ConsultaDto> consultaDtos = consultaService.getConsultaByMedicoId(medico_id, pageable);
-        Page<EntityModel<ConsultaDto>> consultaEntities = consultaDtos.map(consulta ->EntityModel.of(consulta)
+        Page<ConsultaResponseDto> consultaDtos = consultaService.getConsultaByMedicoId(medico_id, pageable);
+        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta ->EntityModel.of(consulta)
                 .add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel()));
 
         return ResponseEntity.status(HttpStatus.OK).body(consultaEntities);
@@ -60,12 +86,17 @@ public class ConsultaController {
 
 
     @GetMapping("/cliente/{cliente_id}")
+    @Operation(summary = "Buscar consultas de um cliente", description = "Método usado para buscar as consulta de um cliente através de seu id")
+    @ApiResponse(responseCode = "200", description = "Consultas encontradas com sucesso")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
+    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoCliente(#cliente_id, authentication)")
-    public ResponseEntity<Page<EntityModel<ConsultaDto>>> getConsultaByClienteId(@PathVariable(value = "cliente_id") UUID cliente_id, @RequestParam(value = "page", defaultValue = "0") int page,
-                                                                    @RequestParam(value = "size",defaultValue = "10") int size) {
+    public ResponseEntity<Page<EntityModel<ConsultaResponseDto>>> getConsultaByClienteId(@PathVariable(value = "cliente_id") UUID cliente_id, @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                                             @RequestParam(value = "size",defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<ConsultaDto> consultaDtos = consultaService.getConsultaByClienteId(cliente_id, pageable);
-        Page<EntityModel<ConsultaDto>> consultaEntities = consultaDtos.map(consulta ->EntityModel.of(consulta)
+        Page<ConsultaResponseDto> consultaDtos = consultaService.getConsultaByClienteId(cliente_id, pageable);
+        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta ->EntityModel.of(consulta)
                 .add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel()));
 
         return ResponseEntity.status(HttpStatus.OK).body(consultaEntities);
@@ -73,19 +104,29 @@ public class ConsultaController {
 
 
     @PutMapping("/{id}")
+    @Operation(summary = "Atualizar consulta", description = "Método usado para atualizar os dados de uma consulta através de seu id usando dados vindos da requisição")
+    @ApiResponse(responseCode = "200", description = "Consulta atualizada com sucesso")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
+    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoConsulta(#id, authentication)")
-    public ResponseEntity<EntityModel<ConsultaDto>> updateConsulta(@PathVariable(value = "id") UUID id, @RequestBody @Valid ConsultaDto consultaDto) {
-        EntityModel<ConsultaDto> consultaEntity = EntityModel.of(consultaService.updateConsulta(id, consultaDto))
+    public ResponseEntity<EntityModel<ConsultaResponseDto>> updateConsulta(@PathVariable(value = "id") UUID id, @RequestBody @Valid ConsultaUpdateDto consultaDto) {
+        EntityModel<ConsultaResponseDto> consultaEntity = EntityModel.of(consultaService.updateConsulta(id, consultaDto))
                 .add(linkTo(methodOn(ConsultaController.class).getConsulta(id)).withSelfRel());
 
         return ResponseEntity.status(HttpStatus.OK).body(consultaEntity);
     }
 
 
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}")
+    @Operation(summary = "Alterar status da consulta", description = "Método usado para alterar o status de uma consulta através de seu id")
+    @ApiResponse(responseCode = "204", description = "Consulta alterada com sucesso")
+    @ApiResponse(responseCode = "403", description = "Acesso negado")
+    @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
+    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoConsulta(#id, authentication)")
-    public ResponseEntity<Void> deleteConsulta(@PathVariable UUID id) {
-        consultaService.deleteConsulta(id);
+    public ResponseEntity<Void> alterarStatusConsulta(@PathVariable UUID id, @RequestParam Status status) {
+        consultaService.alterarStatusConsulta(id, status);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

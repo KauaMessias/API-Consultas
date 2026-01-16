@@ -3,15 +3,15 @@ package com.example.consultas.services;
 import com.example.consultas.dtos.cliente.ClienteRequestDto;
 import com.example.consultas.dtos.cliente.ClienteResponseDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
-import com.example.consultas.models.ClienteModel;
-import com.example.consultas.models.Roles;
-import com.example.consultas.models.UsuarioModel;
+import com.example.consultas.exceptions.UsuarioInativoException;
+import com.example.consultas.models.*;
 import com.example.consultas.repositories.ClienteRepository;
-import com.example.consultas.repositories.EnderecoRepository;
+import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.UsuarioRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.BeanUtils;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,42 +20,55 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
-    private final EnderecoRepository enderecoRepository;
+    private final ConsultaRepository consultaRepository;
 
-    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, EnderecoRepository enderecoRepository) {
+
+    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, ConsultaRepository consultaRepository) {
         this.clienteRepository = clienteRepository;
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
-        this.enderecoRepository = enderecoRepository;
+        this.consultaRepository = consultaRepository;
     }
 
     @Transactional
     public ClienteResponseDto addCliente(ClienteRequestDto clienteRequestDto) {
+        log.info("Criando um cliente");
 
         validarEmail(clienteRequestDto.email());
 
         if (clienteRepository.existsByCpf(clienteRequestDto.cpf())) {
+            log.warn("CPF já está cadastrado");
             throw new EntityExistsException("CPF já cadastrado.");
         }
 
         ClienteModel clienteModel = clienteRequestDto.toEntity();
 
-        UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(clienteRequestDto.email(), passwordEncoder.encode(clienteRequestDto.senha()), Roles.CLIENTE));
+        UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(clienteRequestDto.email(), passwordEncoder.encode(clienteRequestDto.senha()), Roles.CLIENTE, true));
         clienteModel.setUsuario(usuario);
 
-        return new ClienteResponseDto(clienteRepository.save(clienteModel));
+        clienteModel = clienteRepository.save(clienteModel);
+        log.info("Cliente cadastrado com sucesso. id = {}", clienteModel.getId());
+
+        return new ClienteResponseDto(clienteModel);
     }
 
 
     @Transactional
     public ClienteResponseDto updateCliente(UUID id, ClienteRequestDto clienteRequestDto) {
+        log.info("Atualizando o cliente com id {}", id);
         ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new);
         UsuarioModel usuario = clienteModel.getUsuario();
+
+        if(!usuario.isEnabled()){
+            log.warn("Usuário inativo");
+            throw new UsuarioInativoException();
+        }
 
         if (clienteRequestDto.email() != null && !clienteRequestDto.email().equals(usuario.getEmail())) {
             validarEmail(clienteRequestDto.email());
@@ -68,37 +81,61 @@ public class ClienteService {
 
         usuarioRepository.save(usuario);
 
-        return new ClienteResponseDto(clienteRepository.save(clienteRequestDto.updateEntity(clienteModel)));
+        clienteModel = clienteRepository.save(clienteRequestDto.updateEntity(clienteModel));
+        log.info("Cliente atualizado com sucesso");
+
+        return new ClienteResponseDto(clienteModel);
     }
 
 
     public ClienteResponseDto getClienteById(UUID id) {
-        return new ClienteResponseDto(clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new));
+        log.info("Buscando o cliente com o id {}", id);
+
+        ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(()-> {log.warn("Cliente com o id {} não encontrado", id);return new ClienteNotFoundException();});
+
+        log.info("Cliente encontrado com sucesso");
+        return new ClienteResponseDto(clienteModel);
     }
 
 
     public Page<ClienteResponseDto> getClienteByNome(Pageable pageable, String nome) {
-        return clienteRepository.findByNomeContainingIgnoreCase(pageable, nome).map(ClienteResponseDto::new);
+        log.info("Buscando os clientes com o nome {}", nome);
+        var clientes = clienteRepository.findByNomeContainingIgnoreCase(pageable, nome).map(ClienteResponseDto::new);
+
+        log.info("{} clientes encontrados", clientes.getTotalElements());
+        return clientes;
+
     }
 
 
     public Page<ClienteResponseDto> getAllClientes(Pageable pageable) {
-        return clienteRepository.findAll(pageable).map(ClienteResponseDto::new);
+        log.info("Buscando todos os clientes");
+        var clientes = clienteRepository.findAll(pageable).map(ClienteResponseDto::new);
+
+        log.info("{} clientes encontrados", clientes.getTotalElements());
+        return clientes;
     }
 
 
     @Transactional
-    public void deleteCliente(UUID id) {
+    public void desativarCliente(UUID id) {
         ClienteModel cliente = clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new);
         UsuarioModel usuario = cliente.getUsuario();
 
-        clienteRepository.delete(cliente);
-        enderecoRepository.deleteByUsuario_Id(usuario.getId());
-        usuarioRepository.delete(usuario);
+        log.info("Desativando cliente com o id {}", cliente.getId());
+
+        var consultas = consultaRepository.findByCliente_IdAndStatusNot(cliente.getId(), Status.CANCELADA);
+
+        consultas.forEach(consulta -> consulta.setStatus(Status.CANCELADA));
+
+        usuario.setEnabled(false);
+
+        log.info("Cliente desativado com sucesso");
     }
 
     private void validarEmail(String email) {
         if (usuarioRepository.existsByEmail(email)) {
+            log.warn("Email já cadastrado");
             throw new EntityExistsException("Email já cadastrado.");
         }
     }

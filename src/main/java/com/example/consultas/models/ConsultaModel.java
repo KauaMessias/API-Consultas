@@ -33,6 +33,9 @@ public class ConsultaModel implements Serializable {
     @Column(nullable = false)
     private String descricaoConsulta;
 
+    @Column(nullable = false)
+    private Status status;
+
     @ManyToOne
     @JoinColumn(name = "medico_id", nullable = false)
     private MedicoModel medico;

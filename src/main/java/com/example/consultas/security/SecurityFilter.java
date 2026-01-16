@@ -1,5 +1,6 @@
 package com.example.consultas.security;
 
+import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.repositories.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,6 +34,11 @@ public class SecurityFilter extends OncePerRequestFilter {
         if (token != null) {
             String email = tokenService.validarToken(token);
             UserDetails usuario = usuarioRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
+
+            if(tokenService.tokenExpirando(token)){
+                String novoToken = tokenService.gerarToken((UsuarioModel) usuario);
+                response.setHeader("Authorization", "Bearer "+ novoToken);
+            }
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);

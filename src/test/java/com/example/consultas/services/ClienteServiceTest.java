@@ -3,6 +3,7 @@ package com.example.consultas.services;
 import com.example.consultas.dtos.cliente.ClienteRequestDto;
 import com.example.consultas.dtos.cliente.ClienteResponseDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
+import com.example.consultas.exceptions.UsuarioInativoException;
 import com.example.consultas.models.ClienteModel;
 import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
@@ -18,8 +19,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +45,9 @@ class ClienteServiceTest {
     ClienteRepository clienteRepository;
 
     @Mock
+    ConsultaRepository consultaRepository;
+
+    @Mock
     PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -47,7 +56,7 @@ class ClienteServiceTest {
 
     @Test
     @DisplayName("Deve gerar um cliente.")
-    void addClienteCase1() {
+    void addCliente() {
         UsuarioModel usuario = gerarUsuario();
         ClienteModel cliente = gerarCliente();
         cliente.setUsuario(usuario);
@@ -55,14 +64,14 @@ class ClienteServiceTest {
         String senhaCriptografada = "senha-criptografada";
         ArgumentCaptor<UsuarioModel> usuarioArgument = ArgumentCaptor.forClass(UsuarioModel.class);
 
-        when(usuarioRepository.existsByEmail(usuario.getEmail())).thenReturn(false);
+        when(usuarioRepository.existsByEmail(clienteDto.email())).thenReturn(false);
         when(clienteRepository.existsByCpf(clienteDto.cpf())).thenReturn(false);
         when(clienteRepository.save(any())).thenReturn(cliente);
         when(passwordEncoder.encode(clienteDto.senha())).thenReturn(senhaCriptografada);
 
         ClienteResponseDto result = clienteService.addCliente(clienteDto);
 
-        verify(usuarioRepository).existsByEmail(usuario.getEmail());
+        verify(usuarioRepository).existsByEmail(clienteDto.email());
         verify(clienteRepository).existsByCpf(clienteDto.cpf());
         verify(clienteRepository).save(any(ClienteModel.class));
 
@@ -82,7 +91,7 @@ class ClienteServiceTest {
 
     @Test
     @DisplayName("Não deve gerar um cliente ao inserir um email existente.")
-    void gerarClienteCase2() {
+    void gerarClienteEmailExiste() {
         ClienteRequestDto clienteDto = new ClienteRequestDto("Claudio", "claudio@gmail.com", "1234", "12345678901", "(71)99999-9999");
 
         when(usuarioRepository.existsByEmail(clienteDto.email())).thenReturn(true);
@@ -95,7 +104,7 @@ class ClienteServiceTest {
 
     @Test
     @DisplayName("Não deve gerar um cliente ao inserir um cpf existente.")
-    void gerarClienteCase3() {
+    void gerarClienteCpfExiste() {
         ClienteRequestDto clienteDto = new ClienteRequestDto("Claudio", "claudio@gmail.com", "1234", "12345678901", "(71)99999-9999");
 
         when(usuarioRepository.existsByEmail(clienteDto.email())).thenReturn(false);
@@ -138,7 +147,7 @@ class ClienteServiceTest {
 
     @Test
     @DisplayName("Não deve atualizar nada do cliente se email inserido já existe.")
-    void updateClienteCase2() {
+    void updateClienteEmailExiste() {
         ClienteModel cliente = gerarCliente();
         UsuarioModel usuario = gerarUsuario();
         cliente.setUsuario(usuario);
@@ -157,21 +166,35 @@ class ClienteServiceTest {
 
     @Test
     @DisplayName("Não deve atualizar nada do cliente se ele não existir.")
-    void updateClienteCase3() {
-        UUID cliente_id = UUID.randomUUID();
+    void updateClienteNotFound() {
+        UUID clienteId = UUID.randomUUID();
         ClienteRequestDto clienteDto = new ClienteRequestDto("Claudio", "claudio2@gmail.com", null, "12345678901", "(71)99999-9999");
 
-        when(clienteRepository.findById(cliente_id)).thenReturn(Optional.empty());
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(ClienteNotFoundException.class, () -> clienteService.updateCliente(cliente_id, clienteDto));
+        Exception exception = assertThrows(ClienteNotFoundException.class, () -> clienteService.updateCliente(clienteId, clienteDto));
         assertEquals("Cliente não encontrado.", exception.getMessage());
 
-        verify(clienteRepository).findById(cliente_id);
+        verify(clienteRepository).findById(clienteId);
+    }
+
+    @Test
+    @DisplayName("Não deve atualizar o cliente se ele estiver desativado.")
+    void updateClienteDesativado() {
+        UUID clienteId = UUID.randomUUID();
+        ClienteModel cliente = gerarCliente();
+        cliente.getUsuario().setEnabled(false);
+        ClienteRequestDto clienteDto = new ClienteRequestDto("Claudio", "claudio2@gmail.com", null, "12345678901", "(71)99999-9999");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+
+        Exception exception = assertThrows(UsuarioInativoException.class, () -> clienteService.updateCliente(clienteId, clienteDto));
+        assertEquals("Usuário inativo", exception.getLocalizedMessage());
     }
 
     @Test
     @DisplayName("Deve atualizar o cliente e a senha de usuário.")
-    void updateClienteCase4() {
+    void updateClienteAtualizarSenha() {
         ClienteModel cliente = gerarCliente();
         UsuarioModel usuario = gerarUsuario();
         cliente.setUsuario(usuario);
@@ -217,25 +240,26 @@ class ClienteServiceTest {
 
         ClienteResponseDto result = clienteService.getClienteById(cliente.getId());
 
-        verify(clienteRepository).findById(cliente.getId());
         assertEquals(cliente.getId(), result.id());
         assertEquals(cliente.getNome(), result.nome());
         assertEquals(cliente.getCpf(), result.cpf());
         assertEquals(cliente.getTelefone(), result.telefone());
         assertEquals(usuario.getEmail(), result.email());
+
+        verify(clienteRepository).findById(cliente.getId());
     }
 
     @Test
     @DisplayName("Não deve retornar nenhum cliente.")
     void getClienteByIdNotFound() {
-        UUID cliente_id = UUID.randomUUID();
+        UUID clienteId = UUID.randomUUID();
 
-        when(clienteRepository.findById(cliente_id)).thenReturn(Optional.empty());
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(ClienteNotFoundException.class, () -> clienteService.getClienteById(cliente_id));
+        Exception exception = assertThrows(ClienteNotFoundException.class, () -> clienteService.getClienteById(clienteId));
         assertEquals("Cliente não encontrado.", exception.getMessage());
 
-        verify(clienteRepository).findById(cliente_id);
+        verify(clienteRepository).findById(clienteId);
     }
 
     @Test
@@ -243,47 +267,63 @@ class ClienteServiceTest {
     }
 
     @Test
+    @DisplayName("Retorna um page com todos os clientes")
     void getAllClientes() {
+        ClienteModel c1 = gerarCliente();
+        ClienteModel c2 = gerarCliente();
+        ClienteModel c3 = gerarCliente();
+
+
+        Page<ClienteModel> clientes = new PageImpl<>(Arrays.asList(c1, c2, c3));
+
+        Pageable pageable = PageRequest.of(0, 10);
+        when(clienteRepository.findAll(pageable)).thenReturn(clientes);
+
+        Page<ClienteResponseDto> result = clienteService.getAllClientes(pageable);
+
+        assertEquals(3, result.getSize());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(c1.getId(), result.getContent().getFirst().id());
+        assertEquals(c1.getNome(), result.getContent().getFirst().nome());
+        assertEquals(c2.getId(), result.getContent().get(1).id());
+        assertEquals(c2.getNome(), result.getContent().get(1).nome());
+        assertEquals(c3.getId(), result.getContent().get(2).id());
+        assertEquals(c3.getNome(), result.getContent().get(2).nome());
+
+        verify(clienteRepository).findAll(pageable);
     }
 
     @Test
-    @DisplayName("Deve remover um cliente, o usuário relacionado e seus endereços.")
-    void deleteCliente() {
+    @DisplayName("Deve desativar um cliente, o usuário relacionado e seus endereços.")
+    void desativarCliente() {
         ClienteModel cliente = gerarCliente();
         UsuarioModel usuario = gerarUsuario();
         cliente.setUsuario(usuario);
 
         when(clienteRepository.findById(cliente.getId())).thenReturn(Optional.of(cliente));
 
-        clienteService.deleteCliente(cliente.getId());
+        clienteService.desativarCliente(cliente.getId());
 
+        assertEquals(false, usuario.getEnabled());
         verify(clienteRepository).findById(cliente.getId());
-        verify(clienteRepository).delete(cliente);
-        verify(enderecoRepository).deleteByUsuario_Id(usuario.getId());
-        verify(usuarioRepository).delete(usuario);
     }
 
     @Test
-    @DisplayName("Não deve remover um cliente se ele não existir.")
-    void deleteClienteNotFound() {
-        UUID cliente_id = UUID.randomUUID();
+    @DisplayName("Não deve desativar um cliente se ele não existir.")
+    void desativarClienteNotFound() {
+        UUID clienteId = UUID.randomUUID();
 
-        when(clienteRepository.findById(cliente_id)).thenReturn(Optional.empty());
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(ClienteNotFoundException.class, () -> clienteService.deleteCliente(cliente_id));
+        Exception exception = assertThrows(ClienteNotFoundException.class, () -> clienteService.desativarCliente(clienteId));
         assertEquals("Cliente não encontrado.", exception.getMessage());
-
-        verify(clienteRepository).findById(cliente_id);
-        verify(clienteRepository, never()).delete(any(ClienteModel.class));
-        verify(enderecoRepository, never()).deleteByUsuario_Id(any());
-        verify(usuarioRepository, never()).delete(any());
     }
 
     private ClienteModel gerarCliente() {
-        return new ClienteModel(UUID.randomUUID(), "Claudio", "12345678901", "(71)99999-9999", null, null);
+        return new ClienteModel(UUID.randomUUID(), "Claudio", "12345678901", "(71)99999-9999", null, gerarUsuario());
     }
 
     private UsuarioModel gerarUsuario() {
-        return new UsuarioModel(UUID.randomUUID(), "claudio@gmail.com", "12345", Roles.CLIENTE, null);
+        return new UsuarioModel(UUID.randomUUID(), "claudio@gmail.com", "12345", Roles.CLIENTE, true, null);
     }
 }

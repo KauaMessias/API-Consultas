@@ -1,6 +1,8 @@
 package com.example.consultas.services;
 
-import com.example.consultas.dtos.ConsultaDto;
+import com.example.consultas.dtos.consulta.ConsultaDto;
+import com.example.consultas.dtos.consulta.ConsultaResponseDto;
+import com.example.consultas.dtos.consulta.ConsultaUpdateDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
 import com.example.consultas.exceptions.ConflitoConsultaException;
 import com.example.consultas.exceptions.ConsultaNotFoundException;
@@ -8,11 +10,12 @@ import com.example.consultas.exceptions.MedicoNotFoundException;
 import com.example.consultas.models.ClienteModel;
 import com.example.consultas.models.ConsultaModel;
 import com.example.consultas.models.MedicoModel;
+import com.example.consultas.models.Status;
 import com.example.consultas.repositories.ClienteRepository;
 import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.MedicoRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.BeanUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,11 +24,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class ConsultaService {
 
     private final ConsultaRepository consultaRepository;
     private final MedicoRepository medicoRepository;
     private final ClienteRepository clienteRepository;
+    private final int INTERVALO_CONSULTA = 15;
+
 
     public ConsultaService(ConsultaRepository consultaRepository, MedicoRepository medicoRepository, ClienteRepository clienteRepository) {
         this.consultaRepository = consultaRepository;
@@ -34,48 +40,67 @@ public class ConsultaService {
     }
 
 
-    public List<ConsultaDto> getConsultaByMedicoCrm(String medicoCrm) {
-        return consultaRepository.findByMedico_Crm(medicoCrm)
+    public List<ConsultaResponseDto> getConsultaByMedicoCrm(String medicoCrm) {
+        log.info("Buscando consultas do médico com o CRM {}", medicoCrm);
+        var consultas = consultaRepository.findByMedico_Crm(medicoCrm)
                 .stream()
-                .map(ConsultaDto::new)
+                .map(ConsultaResponseDto::new)
                 .toList();
+
+        log.info("{} consultas encontradas", consultas.size());
+        return consultas;
     }
 
 
-    public List<ConsultaDto> getConsultaByClienteCpf(String clienteCpf) {
-        return consultaRepository.findByCliente_Cpf(clienteCpf)
+    public List<ConsultaResponseDto> getConsultaByClienteCpf(String clienteCpf) {
+        log.info("Buscando consultas de um cliente");
+        var consultas = consultaRepository.findByCliente_Cpf(clienteCpf)
                 .stream()
-                .map(ConsultaDto::new)
+                .map(ConsultaResponseDto::new)
                 .toList();
+        log.info("{} consultas encontradas", consultas.size());
+        return consultas;
     }
 
 
-    public List<ConsultaDto> getConsultaByMed_NomeAndCli_Cpf(String med_Nome, String clienteCpf) {
-        return consultaRepository.findByMedico_NomeContainingIgnoreCaseAndCliente_Cpf(med_Nome, clienteCpf)
-                .stream()
-                .map(ConsultaDto::new)
-                .toList();
-    }
+    public Page<ConsultaResponseDto> getConsultaByMedicoId(UUID id, Pageable pageable) {
+        log.info("Buscando consultas do médico com id {}", id);
+        if (!medicoRepository.existsById(id)) {
+            throw new MedicoNotFoundException();
+        }
+        var consultas = consultaRepository.findByMedico_Id(id, pageable)
+                .map(ConsultaResponseDto::new);
+        log.info("{} consultas encontradas", consultas.getTotalElements());
 
-    public Page<ConsultaDto> getConsultaByMedicoId(UUID id, Pageable pageable) {
-        return consultaRepository.findByMedico_Id(id, pageable)
-                .map(ConsultaDto::new);
-    }
-
-
-    public Page<ConsultaDto> getConsultaByClienteId(UUID id, Pageable pageable) {
-        return consultaRepository.findByCliente_Id(id, pageable)
-                .map(ConsultaDto::new);
+        return consultas;
     }
 
 
-    public ConsultaDto getConsultaById(UUID id) {
-        return new ConsultaDto(consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new));
+    public Page<ConsultaResponseDto> getConsultaByClienteId(UUID id, Pageable pageable) {
+        log.info("Buscando consultas do cliente com id {}", id);
+        if (!clienteRepository.existsById(id)) {
+            throw new ClienteNotFoundException();
+        }
+        var consultas = consultaRepository.findByCliente_Id(id, pageable)
+                .map(ConsultaResponseDto::new);
+        log.info("{} consultas encontradas", consultas.getTotalElements());
+
+        return consultas;
+    }
+
+
+    public ConsultaResponseDto getConsultaById(UUID id) {
+        log.info("Buscando consulta com id {}", id);
+        var consulta = consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new);
+        log.info("Consulta encontrada com sucesso");
+
+        return new ConsultaResponseDto(consulta);
     }
 
 
     @Transactional
-    public ConsultaDto addConsulta(ConsultaDto consultaDto) {
+    public ConsultaResponseDto addConsulta(ConsultaDto consultaDto) {
+        log.info("Criando uma nova consulta");
         ConsultaModel consultaModel = consultaDto.toEntity();
 
         MedicoModel medicoModel = medicoRepository.findById(consultaDto.medico_id()).orElseThrow(MedicoNotFoundException::new);
@@ -84,39 +109,66 @@ public class ConsultaService {
         ClienteModel clienteModel = clienteRepository.findById(consultaDto.cliente_id()).orElseThrow(ClienteNotFoundException::new);
         consultaModel.setCliente(clienteModel);
 
-        if(consultaRepository.existsByMedico_IdAndDataConsultaBetween(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14))) {
+        if (consultaRepository.existsByMedico_IdAndDataConsultaBetween(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(INTERVALO_CONSULTA), consultaDto.dataConsulta().plusMinutes(INTERVALO_CONSULTA))) {
+            log.warn("Médico com o id {} já possui uma consulta neste horário", medicoModel.getId());
             throw new ConflitoConsultaException("Médico já possui uma consulta no horário.");
         }
 
-        if(consultaRepository.existsByCliente_IdAndDataConsultaBetween(consultaDto.cliente_id(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14))){
+        if (consultaRepository.existsByCliente_IdAndDataConsultaBetween(consultaDto.cliente_id(), consultaDto.dataConsulta().minusMinutes(INTERVALO_CONSULTA), consultaDto.dataConsulta().plusMinutes(INTERVALO_CONSULTA))) {
+            log.warn("Cliente com o id {} já possui uma consulta neste horário", clienteModel.getId());
             throw new ConflitoConsultaException("Cliente já possui uma consulta no horário.");
         }
 
-        return new ConsultaDto(consultaRepository.save(consultaModel));
+        consultaModel.setStatus(Status.PENDENTE);
+
+        consultaModel = consultaRepository.save(consultaModel);
+
+        log.info("Consulta com o id {} criada com sucesso", consultaModel.getId());
+
+        return new ConsultaResponseDto(consultaModel);
     }
 
 
     @Transactional
-    public ConsultaDto updateConsulta(UUID id, ConsultaDto consultaDto) {
+    public ConsultaResponseDto updateConsulta(UUID id, ConsultaUpdateDto consultaDto) {
+        log.info("Atualizando a consulta de id {}", id);
         ConsultaModel consultaModel = consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new);
 
-        if(consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndIdNot(consultaModel.getMedico().getId(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())) {
+        verificarStatusConsulta(consultaModel);
+
+        if (consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndIdNot(consultaModel.getMedico().getId(), consultaDto.data().minusMinutes(INTERVALO_CONSULTA), consultaDto.data().plusMinutes(INTERVALO_CONSULTA), consultaModel.getId())) {
+            log.warn("Médico com o id {} já possui uma consulta neste horário", consultaModel.getMedico().getId());
             throw new ConflitoConsultaException();
         }
 
-        if(consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndIdNot(consultaModel.getCliente().getId(), consultaDto.dataConsulta().minusMinutes(15), consultaDto.dataConsulta().plusMinutes(14), consultaModel.getId())){
+        if (consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndIdNot(consultaModel.getCliente().getId(), consultaDto.data().minusMinutes(INTERVALO_CONSULTA), consultaDto.data().plusMinutes(INTERVALO_CONSULTA), consultaModel.getId())) {
+            log.warn("Cliente com o id {} já possui uma consulta neste horário", consultaModel.getCliente().getId());
             throw new ConflitoConsultaException();
         }
 
-        consultaDto.updateEntity(consultaModel);
+        consultaModel = consultaRepository.save(consultaDto.updateConsulta(consultaModel));
+        log.info("Consulta atualizada com sucesso");
 
-        return new ConsultaDto(consultaRepository.save(consultaModel));
+        return new ConsultaResponseDto(consultaModel);
     }
 
 
     @Transactional
-    public void deleteConsulta(UUID id) {
-        consultaRepository.delete(consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new));
+    public void alterarStatusConsulta(UUID id, Status status) {
+        ConsultaModel consultaModel = consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new);
+
+        verificarStatusConsulta(consultaModel);
+        consultaModel.setStatus(status);
+        consultaRepository.save(consultaModel);
     }
 
+    
+    private void verificarStatusConsulta(ConsultaModel consultaModel) {
+        if (consultaModel.getStatus().equals(Status.CANCELADA) || consultaModel.getStatus().equals(Status.CONCLUIDA)) {
+            log.warn("Consulta {}", consultaModel.getStatus());
+            throw new ConflitoConsultaException("Consulta "+ consultaModel.getStatus());
+
+        }
+    }
 }
+

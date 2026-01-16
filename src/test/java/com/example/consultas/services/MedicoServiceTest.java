@@ -3,9 +3,11 @@ package com.example.consultas.services;
 import com.example.consultas.dtos.medico.MedicoRequestDto;
 import com.example.consultas.dtos.medico.MedicoResponseDto;
 import com.example.consultas.exceptions.MedicoNotFoundException;
+import com.example.consultas.exceptions.UsuarioInativoException;
 import com.example.consultas.models.MedicoModel;
 import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
+import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.MedicoRepository;
 import com.example.consultas.repositories.EnderecoRepository;
 import com.example.consultas.repositories.UsuarioRepository;
@@ -38,6 +40,9 @@ class MedicoServiceTest {
     MedicoRepository medicoRepository;
 
     @Mock
+    ConsultaRepository consultaRepository;
+
+    @Mock
     PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -45,8 +50,8 @@ class MedicoServiceTest {
 
 
     @Test
-    @DisplayName("Deve gerar um medico.")
-    void addMedicoCase1() {
+    @DisplayName("Deve gerar um médico.")
+    void addMedico() {
         UsuarioModel usuario = gerarUsuario();
         MedicoModel medico = gerarMedico();
         medico.setUsuario(usuario);
@@ -58,6 +63,7 @@ class MedicoServiceTest {
         when(medicoRepository.existsByCrm(medicoDto.crm())).thenReturn(false);
         when(medicoRepository.save(any())).thenReturn(medico);
         when(passwordEncoder.encode(medicoDto.senha())).thenReturn(senhaCriptografada);
+        when(usuarioRepository.save(any())).thenReturn(usuario);
 
         MedicoResponseDto result = medicoService.addMedico(medicoDto);
 
@@ -80,8 +86,8 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Não deve gerar um medico ao inserir um email existente.")
-    void gerarMedicoCase2() {
+    @DisplayName("Não deve gerar um médico ao inserir um email existente.")
+    void gerarMedicoEmailExiste() {
         MedicoRequestDto medicoDto = new MedicoRequestDto("Roberto", "12345", "roberto@gmail.com", "1234", "(71)99999-9999", "Clinico Geral");
 
         when(usuarioRepository.existsByEmail(medicoDto.email())).thenReturn(true);
@@ -93,8 +99,8 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Não deve gerar um medico ao inserir um crm existente.")
-    void gerarMedicoCase3() {
+    @DisplayName("Não deve gerar um médico ao inserir um crm existente.")
+    void gerarMedicoCrmExiste() {
         MedicoRequestDto medicoDto = new MedicoRequestDto("Roberto", "12345", "roberto@gmail.com", "1234", "(71)99999-9999", "Clinico Geral");
 
         when(usuarioRepository.existsByEmail(medicoDto.email())).thenReturn(false);
@@ -108,7 +114,7 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve atualizar medico e o email do usuário relacionado.")
+    @DisplayName("Deve atualizar o médico e o email do usuário relacionado.")
     void updateMedico() {
         MedicoModel medico = gerarMedico();
         UsuarioModel usuario = gerarUsuario();
@@ -137,8 +143,8 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Não deve atualizar nada do medico se email inserido já existe.")
-    void updateMedicoCase2() {
+    @DisplayName("Não deve atualizar o médico se email inserido já existe.")
+    void updateMedicoEmailExiste() {
         MedicoModel medico = gerarMedico();
         UsuarioModel usuario = gerarUsuario();
         medico.setUsuario(usuario);
@@ -156,22 +162,38 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Não deve atualizar nada do medico se ele não existir.")
-    void updateMedicoCase3() {
-        UUID medico_id = UUID.randomUUID();
+    @DisplayName("Não deve atualizar o médico se ele não existir.")
+    void updateMedicoNotFound() {
+        UUID medicoId = UUID.randomUUID();
         MedicoRequestDto medicoDto = new MedicoRequestDto("Roberto", "12345", "roberto@gmail.com", "1234", "(71)99999-9999", "Clinico Geral");
 
-        when(medicoRepository.findById(medico_id)).thenReturn(Optional.empty());
+        when(medicoRepository.findById(medicoId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(MedicoNotFoundException.class, () -> medicoService.updateMedico(medico_id, medicoDto));
+        Exception exception = assertThrows(MedicoNotFoundException.class, () -> medicoService.updateMedico(medicoId, medicoDto));
         assertEquals("Medico não encontrado.", exception.getMessage());
 
-        verify(medicoRepository).findById(medico_id);
+        verify(medicoRepository).findById(medicoId);
     }
 
     @Test
-    @DisplayName("Deve atualizar o medico e a senha de usuário.")
-    void updateMedicoCase4() {
+    @DisplayName("Não deve atualizar o médico se ele estiver desativado")
+    void updateMedicoDesativado() {
+        MedicoModel medico = gerarMedico();
+        UsuarioModel usuario = gerarUsuario();
+        medico.setUsuario(usuario);
+        usuario.setEnabled(false);
+
+        MedicoRequestDto medicoDto = new MedicoRequestDto("Roberto", "12345", "roberto@gmail.com", "1234", "(71)99999-9999", "Clinico Geral");
+
+        when(medicoRepository.findById(medico.getId())).thenReturn(Optional.of(medico));
+
+        Exception exception = assertThrows(UsuarioInativoException.class, () -> medicoService.updateMedico(medico.getId(), medicoDto));
+        assertEquals("Usuário inativo", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar o médico e a senha de usuário.")
+    void updateMedicoAtualizarSenha() {
         MedicoModel medico = gerarMedico();
         UsuarioModel usuario = gerarUsuario();
         medico.setUsuario(usuario);
@@ -208,7 +230,7 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve retornar o medico encontrado.")
+    @DisplayName("Deve retornar o médico encontrado.")
     void getMedicoById() {
         MedicoModel medico = gerarMedico();
         UsuarioModel usuario = gerarUsuario();
@@ -228,16 +250,16 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Não deve retornar nenhum medico.")
+    @DisplayName("Não deve retornar nenhum médico.")
     void getMedicoByIdNotFound() {
-        UUID medico_id = UUID.randomUUID();
+        UUID medicoId = UUID.randomUUID();
 
-        when(medicoRepository.findById(medico_id)).thenReturn(Optional.empty());
+        when(medicoRepository.findById(medicoId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(MedicoNotFoundException.class, () -> medicoService.getMedicoById(medico_id));
+        Exception exception = assertThrows(MedicoNotFoundException.class, () -> medicoService.getMedicoById(medicoId));
         assertEquals("Medico não encontrado.", exception.getMessage());
 
-        verify(medicoRepository).findById(medico_id);
+        verify(medicoRepository).findById(medicoId);
     }
 
     @Test
@@ -249,36 +271,29 @@ class MedicoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve remover um medico, o usuário relacionado e seus endereços.")
-    void deleteMedico() {
+    @DisplayName("Deve remover um médico, o usuário relacionado e seus endereços.")
+    void desativarMedico() {
         MedicoModel medico = gerarMedico();
         UsuarioModel usuario = gerarUsuario();
         medico.setUsuario(usuario);
 
         when(medicoRepository.findById(medico.getId())).thenReturn(Optional.of(medico));
 
-        medicoService.deleteMedico(medico.getId());
+        medicoService.desativarMedico(medico.getId());
 
         verify(medicoRepository).findById(medico.getId());
-        verify(medicoRepository).delete(medico);
-        verify(enderecoRepository).deleteByUsuario_Id(usuario.getId());
-        verify(usuarioRepository).delete(usuario);
+        assertEquals(false, usuario.getEnabled());
     }
 
     @Test
-    @DisplayName("Não deve remover um medico se ele não existir.")
-    void deleteMedicoNotFound() {
-        UUID medico_id = UUID.randomUUID();
+    @DisplayName("Não deve remover um médico se ele não existir.")
+    void desativarMedicoNotFound() {
+        UUID medicoId = UUID.randomUUID();
 
-        when(medicoRepository.findById(medico_id)).thenReturn(Optional.empty());
+        when(medicoRepository.findById(medicoId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(MedicoNotFoundException.class, () -> medicoService.deleteMedico(medico_id));
+        Exception exception = assertThrows(MedicoNotFoundException.class, () -> medicoService.desativarMedico(medicoId));
         assertEquals("Medico não encontrado.", exception.getMessage());
-
-        verify(medicoRepository).findById(medico_id);
-        verify(medicoRepository, never()).delete(any(MedicoModel.class));
-        verify(enderecoRepository, never()).deleteByUsuario_Id(any());
-        verify(usuarioRepository, never()).delete(any());
     }
 
     private MedicoModel gerarMedico() {
@@ -286,6 +301,6 @@ class MedicoServiceTest {
     }
 
     private UsuarioModel gerarUsuario() {
-        return new UsuarioModel(UUID.randomUUID(), "roberto@gmail.com", "1234", Roles.MEDICO, null);
+        return new UsuarioModel(UUID.randomUUID(), "roberto@gmail.com", "1234", Roles.MEDICO, true, null);
     }
 }

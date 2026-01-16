@@ -14,7 +14,6 @@ public interface MedicoRepository extends JpaRepository<MedicoModel, UUID> {
 
     Optional<MedicoModel> findByCrm(String crm);
 
-
     Page<MedicoModel> findByNomeContainingIgnoreCase(Pageable pageable, String nome);
 
     boolean existsByIdAndUsuario_Id(UUID id, UUID usuarioId);

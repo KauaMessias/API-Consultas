@@ -33,15 +33,18 @@ public class UsuarioModel implements UserDetails {
     private String senha;
     @Column(nullable = false)
     private Roles role;
+    @Column(nullable = false)
+    private Boolean enabled;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
     private List<EnderecoModel> enderecos;
 
-    public UsuarioModel(String email, String senha, Roles role) {
+    public UsuarioModel(String email, String senha, Roles role, boolean enabled) {
         this.email = email;
         this.senha = senha;
         this.role = role;
+        this.enabled = enabled;
     }
 
     @Override
@@ -63,7 +66,6 @@ public class UsuarioModel implements UserDetails {
         return email;
     }
 
-
     @Override
     public boolean isAccountNonExpired() {
         return UserDetails.super.isAccountNonExpired();
@@ -81,6 +83,6 @@ public class UsuarioModel implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return enabled;
     }
 }

@@ -49,6 +49,7 @@ class UsuarioRepositoryTest {
     }
 
     @Test
+    @DisplayName("Deve retornar true quando encontrar um usuário com o email enviado.")
     void existsByEmail() {
         AuthenticationDto authenticationDto = new AuthenticationDto("carlos@gmail.com", "1234");
         criarUsuario(authenticationDto);
@@ -63,6 +64,7 @@ class UsuarioRepositoryTest {
         usuario.setEmail(authenticationDto.email());
         usuario.setSenha(authenticationDto.senha());
         usuario.setRole(Roles.CLIENTE);
+        usuario.setEnabled(true);
         em.persist(usuario);
         return usuario;
     };

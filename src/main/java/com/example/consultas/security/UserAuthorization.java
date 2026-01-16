@@ -29,6 +29,7 @@ public class UserAuthorization {
 
     public boolean acessoCliente(UUID id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
+        if(!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
@@ -46,6 +47,7 @@ public class UserAuthorization {
 
     public boolean acessoMedico(UUID medico_id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
+        if(!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
@@ -56,6 +58,7 @@ public class UserAuthorization {
 
     public boolean acessoConsulta(UUID id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
+        if(!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
@@ -74,6 +77,8 @@ public class UserAuthorization {
 
     public boolean acessoEndereco(UUID endereco_id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
+        if(!usuario.isEnabled()) return false;
+
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
         }
