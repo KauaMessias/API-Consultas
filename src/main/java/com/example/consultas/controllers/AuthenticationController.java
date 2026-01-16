@@ -2,10 +2,8 @@ package com.example.consultas.controllers;
 
 import com.example.consultas.dtos.AuthenticationDto;
 import com.example.consultas.dtos.LoginResponseDto;
-import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.security.TokenService;
-import com.example.consultas.services.AuthorizationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

@@ -2,7 +2,6 @@ package com.example.consultas.controllers;
 
 import com.example.consultas.dtos.consulta.ConsultaDto;
 import com.example.consultas.dtos.consulta.ConsultaResponseDto;
-import com.example.consultas.dtos.consulta.ConsultaResponseDto;
 import com.example.consultas.dtos.consulta.ConsultaUpdateDto;
 import com.example.consultas.exceptions.ClienteNotFoundException;
 import com.example.consultas.exceptions.ConflitoConsultaException;
