@@ -56,11 +56,20 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/clientes/**").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/clientes/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/medicos/{id}/horarios").hasRole("MEDICO")
+                                .requestMatchers(HttpMethod.GET, "/api/v1/medicos/horarios/{id}").hasRole("MEDICO")
+                                .requestMatchers(HttpMethod.POST, "/api/v1/medicos/horarios").hasRole("MEDICO")
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/medicos/horarios/{id}").hasRole("MEDICO")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/medicos/{id}/horarios/disponiveis").hasAnyRole("MEDICO", "CLIENTE")
+
+
                         .requestMatchers(HttpMethod.PUT, "/api/v1/clientes/**").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/clientes/**").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/medicos/**").hasRole("MEDICO")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/medicos/**").hasRole("MEDICO")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/medicos/perfil").hasRole("MEDICO")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/clientes/perfil").hasRole("CLIENTE")
                         .requestMatchers( "/", "/error", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-ui/index.html").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -70,10 +79,10 @@ public class SecurityConfigurations {
     @Bean
    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4173"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        configuration.setAllowCredentials(true);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

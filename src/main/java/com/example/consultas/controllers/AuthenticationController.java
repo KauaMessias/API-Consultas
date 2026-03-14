@@ -33,7 +33,7 @@ public class AuthenticationController {
 
         String token = tokenService.gerarToken((UsuarioModel) auth.getPrincipal());
 
-        return ResponseEntity.ok().body(new LoginResponseDto(token));
+        return ResponseEntity.ok().body(new LoginResponseDto(token, auth.getAuthorities().toString()));
     }
 
 }

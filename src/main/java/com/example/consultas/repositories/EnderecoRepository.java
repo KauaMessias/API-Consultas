@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,4 +27,10 @@ public interface EnderecoRepository extends JpaRepository<EnderecoModel, UUID> {
     Page<EnderecoModel> getAllByUsuario_Id(UUID usuarioId, Pageable pageable);
 
     Page<EnderecoModel> findAllByUsuario_Id(UUID usuarioId, Pageable pageable);
+
+    boolean existsByUsuario_Id(UUID usuarioId);
+
+    List<EnderecoModel> findAllByUsuario_IdAndPrincipal(UUID usuarioId, Boolean principal);
+
+    EnderecoModel findByUsuario_IdAndPrincipal(UUID usuarioId, Boolean principal);
 }

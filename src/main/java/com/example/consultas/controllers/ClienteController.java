@@ -2,6 +2,8 @@ package com.example.consultas.controllers;
 
 import com.example.consultas.dtos.cliente.ClienteRequestDto;
 import com.example.consultas.dtos.cliente.ClienteResponseDto;
+import com.example.consultas.models.Roles;
+import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.security.SecurityConfigurations;
 import com.example.consultas.services.ClienteService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +21,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -118,6 +121,13 @@ public class ClienteController {
     public ResponseEntity<Void> desativarCliente(@PathVariable(value = "id") UUID id) {
         clienteService.desativarCliente(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+
+    @GetMapping("/perfil")
+    public ResponseEntity<ClienteResponseDto> meuPerfil(@AuthenticationPrincipal UsuarioModel usuarioModel){
+        ClienteResponseDto response = clienteService.exibirPerfil(usuarioModel);
+        return ResponseEntity.ok(response);
     }
 }
 

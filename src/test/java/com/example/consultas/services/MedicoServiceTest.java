@@ -297,7 +297,7 @@ class MedicoServiceTest {
     }
 
     private MedicoModel gerarMedico() {
-        return new MedicoModel(UUID.randomUUID(), "Roberto", "12345", "(71)99999-9999", "Clinico Geral", null, null);
+        return new MedicoModel(UUID.randomUUID(), "Roberto", "12345", "(71)99999-9999", "Clinico Geral", null, null, null);
     }
 
     private UsuarioModel gerarUsuario() {

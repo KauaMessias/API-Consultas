@@ -416,12 +416,12 @@ class ConsultaControllerTest {
     void alterarStatusConsulta() throws Exception {
         UUID consultaId = UUID.randomUUID();
 
-        doNothing().when(consultaService).alterarStatusConsulta(eq(consultaId), eq(Status.CONCLUIDA));
+        doNothing().when(consultaService).alterarStatusConsulta(eq(consultaId), eq("CONCLUIDA"));
         mockMvc.perform(patch("/api/v1/consultas/{id}", consultaId)
                 .param("status", Status.CONCLUIDA.toString()))
                 .andExpect(status().isNoContent());
 
-        verify(consultaService).alterarStatusConsulta(eq(consultaId), eq(Status.CONCLUIDA));
+        verify(consultaService).alterarStatusConsulta(eq(consultaId), eq("CONCLUIDA"));
     }
 
     @Test
@@ -430,7 +430,7 @@ class ConsultaControllerTest {
         UUID consultaId = UUID.randomUUID();
         ConsultaNotFoundException e = new ConsultaNotFoundException();
 
-        doThrow(e).when(consultaService).alterarStatusConsulta(eq(consultaId), eq(Status.CONCLUIDA));
+        doThrow(e).when(consultaService).alterarStatusConsulta(eq(consultaId), eq("CONCLUIDA"));
 
         mockMvc.perform(patch("/api/v1/consultas/{id}", consultaId)
                         .param("status", Status.CONCLUIDA.toString()))
@@ -442,6 +442,6 @@ class ConsultaControllerTest {
                         jsonPath("$.path", is("/api/v1/consultas/" + consultaId))
                 );
 
-        verify(consultaService).alterarStatusConsulta(eq(consultaId), eq(Status.CONCLUIDA));
+        verify(consultaService).alterarStatusConsulta(eq(consultaId), eq("CONCLUIDA"));
     }
 }

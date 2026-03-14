@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.UUID;
 
 @Entity
@@ -15,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "TB_Enderecos")
-public class EnderecoModel {
+public class EnderecoModel implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     @Id
@@ -33,6 +34,8 @@ public class EnderecoModel {
     private String rua;
     @Column(nullable = false)
     private String numero;
+    @Column(nullable = false)
+    private Boolean principal;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)

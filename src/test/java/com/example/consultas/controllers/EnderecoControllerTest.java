@@ -59,7 +59,7 @@ class EnderecoControllerTest {
     @DisplayName("Deve retornar CREATED (201) e o dto do endereço criado")
     void criarEndereco() throws Exception {
         EnderecoDto enderecoRequest = gerarEndereco();
-        EnderecoDto enderecoResponse = new EnderecoDto(UUID.randomUUID(), "BA", "Salvador", "41285942", "Brotas", "Rua Fonseca", "41");
+        EnderecoDto enderecoResponse = new EnderecoDto(UUID.randomUUID(), "BA", "Salvador", "41285942", "Brotas", "Rua Fonseca", "41", true);
         UsuarioModel usuario = gerarUsuario();
 
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
@@ -191,7 +191,7 @@ class EnderecoControllerTest {
     @DisplayName("Deve retornar OK (200) e o endereço atualizado.")
     void editarEndereco() throws Exception {
         EnderecoDto enderecoRequest = gerarEndereco();
-        EnderecoDto enderecoResponse = new EnderecoDto(enderecoRequest.id(), "BA", "Salvador", "41285942", "Brotas", "Rua Fonseca", "41");
+        EnderecoDto enderecoResponse = new EnderecoDto(enderecoRequest.id(), "BA", "Salvador", "41285942", "Brotas", "Rua Fonseca", "41", true);
         ;
 
         when(enderecoService.updateEndereco(enderecoResponse.id(), enderecoRequest)).thenReturn(enderecoResponse);
@@ -260,7 +260,7 @@ class EnderecoControllerTest {
     }
 
     private EnderecoDto gerarEndereco() {
-        return new EnderecoDto(UUID.randomUUID(), "BA", "Salvador", "41285942", "Brotas", "Rua Fonseca", "41");
+        return new EnderecoDto(UUID.randomUUID(), "BA", "Salvador", "41285942", "Brotas", "Rua Fonseca", "41", true);
     }
 
     private UsuarioModel gerarUsuario() {

@@ -1,7 +1,10 @@
 package com.example.consultas.controllers;
 
+import com.example.consultas.dtos.medico.HorarioDisponivelDto;
+import com.example.consultas.dtos.medico.HorarioDto;
 import com.example.consultas.dtos.medico.MedicoRequestDto;
 import com.example.consultas.dtos.medico.MedicoResponseDto;
+import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.security.SecurityConfigurations;
 import com.example.consultas.services.MedicoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.hibernate.Remove;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,9 +23,12 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -63,11 +70,8 @@ public class MedicoController {
     @ApiResponse(responseCode = "403", description = "Acesso negado")
     @ApiResponse(responseCode = "404", description = "Médico não encontrado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
-    public ResponseEntity<EntityModel<MedicoResponseDto>> getMedicoById(@PathVariable(value = "id") UUID id) {
-        EntityModel<MedicoResponseDto> medicoDtoEntity = EntityModel.of(medicoService.getMedicoById(id));
-        medicoDtoEntity.add(linkTo(methodOn(MedicoController.class).getAllMedicos(0, 10)).withRel("all-medicos"));
-        
-        return ResponseEntity.ok().body(medicoDtoEntity);
+    public ResponseEntity<MedicoResponseDto> getMedicoById(@PathVariable UUID id) {
+        return ResponseEntity.ok().body(medicoService.getMedicoById(id));
     }
 
     @GetMapping
@@ -75,19 +79,14 @@ public class MedicoController {
     @ApiResponse(responseCode = "200", description = "Médicos encontrados com sucesso")
     @ApiResponse(responseCode = "403", description = "Acesso negado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
-    public ResponseEntity<CollectionModel<EntityModel<MedicoResponseDto>>> getAllMedicos(@RequestParam(defaultValue = "0", value = "page") @Min(0) int page,
-                                                                                         @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(25) int size) {
+    public ResponseEntity<Page<MedicoResponseDto>> getAllMedicos(@RequestParam(defaultValue = "0", value = "page") @Min(0) int page,
+                                                                                         @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(25) int size,
+                                                                                         @RequestParam(required = false) String especialidade, @RequestParam(required = false) String cidade) {
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<MedicoResponseDto> medicoResponseDtos = medicoService.getAllMedicos(pageable);
+        Page<MedicoResponseDto> medicoResponseDtos = medicoService.getAllMedicos(pageable, especialidade, cidade);
 
-        Page<EntityModel<MedicoResponseDto>> medicoEntities = medicoResponseDtos
-                .map(medico -> EntityModel.of(medico)
-                        .add(linkTo(methodOn(MedicoController.class).getMedicoById(medico.id())).withSelfRel()));
-
-        CollectionModel<EntityModel<MedicoResponseDto>> collectionModel = CollectionModel.of(medicoEntities, linkTo(methodOn(MedicoController.class).getAllMedicos(page, size)).withSelfRel());
-
-        return ResponseEntity.status(HttpStatus.OK).body(collectionModel);
+        return ResponseEntity.status(HttpStatus.OK).body(medicoResponseDtos);
     }
 
 
@@ -98,7 +97,7 @@ public class MedicoController {
     @ApiResponse(responseCode = "404", description = "Médico não encontrado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoMedico(#id, authentication)")
-    public ResponseEntity<EntityModel<MedicoResponseDto>> updateMedico(@PathVariable(value = "id") UUID id, @RequestBody @Valid MedicoRequestDto medicoRequestDto) {
+    public ResponseEntity<EntityModel<MedicoResponseDto>> updateMedico(@PathVariable UUID id, @RequestBody @Valid MedicoRequestDto medicoRequestDto) {
         EntityModel<MedicoResponseDto> medicoDtoEntity = EntityModel.of(medicoService.updateMedico(id, medicoRequestDto));
         medicoDtoEntity.add(linkTo(methodOn(MedicoController.class).getMedicoById(id)).withSelfRel());
 
@@ -113,10 +112,51 @@ public class MedicoController {
     @ApiResponse(responseCode = "404", description = "Médico não encontrado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoMedico(#id, authentication)")
-    public ResponseEntity<Void> desativarMedico(@PathVariable(value = "id") UUID id) {
+    public ResponseEntity<Void> desativarMedico(@PathVariable UUID id) {
         medicoService.desativarMedico(id);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @GetMapping("/perfil")
+    public ResponseEntity<MedicoResponseDto> meuPerfil(@AuthenticationPrincipal UsuarioModel usuarioModel){
+        MedicoResponseDto response = medicoService.exibirPerfil(usuarioModel);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/horarios")
+    public ResponseEntity<HorarioDto> criarHorarios(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestBody @Valid HorarioDto horarioDto){
+        HorarioDto response = medicoService.addHorario(usuarioModel, horarioDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+
+    @GetMapping("/{id}/horarios")
+    public ResponseEntity<List<HorarioDto>> getAllHorarios(@PathVariable UUID id){
+        List<HorarioDto> response = medicoService.getAllHorarios(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/horarios/disponiveis")
+    public ResponseEntity<List<HorarioDisponivelDto>> getHorariosDisponiveis(@PathVariable UUID id, @RequestParam LocalDate data){
+        return ResponseEntity.ok(medicoService.getHorariosDisponiveis(id, data));
+    }
+
+
+    @PatchMapping("/horarios/{id}")
+    public ResponseEntity<HorarioDto> mudarStatusHorario(@PathVariable UUID id){
+        HorarioDto response = medicoService.mudarStatusHorario(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/horarios/{id}")
+    public ResponseEntity<Void> removerHorario(@PathVariable UUID id){
+        medicoService.deletarHorario(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+
+
 
 }

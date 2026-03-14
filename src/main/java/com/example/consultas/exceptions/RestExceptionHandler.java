@@ -1,5 +1,7 @@
 package com.example.consultas.exceptions;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import jakarta.persistence.EntityExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +43,6 @@ public class RestExceptionHandler {
         log.error(e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDto(LocalDateTime.now(), HttpStatus.CONFLICT.value(), HttpStatus.CONFLICT.name(), e.getMessage(), request.getRequestURI()));
     }
-
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {

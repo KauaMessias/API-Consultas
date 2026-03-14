@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -109,5 +110,11 @@ public class EnderecoController {
     public ResponseEntity<Void> deletarEndereco(@PathVariable(value = "id") UUID id) {
         enderecoService.deleteEndereco(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<EnderecoDto> mudarPrincipal(@PathVariable(value = "id") UUID id, @AuthenticationPrincipal UsuarioModel usuarioModel){
+        EnderecoDto response = enderecoService.mudarPrincipal(id, usuarioModel);
+        return ResponseEntity.ok(response);
     }
 }

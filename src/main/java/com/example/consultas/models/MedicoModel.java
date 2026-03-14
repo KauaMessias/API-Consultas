@@ -40,6 +40,10 @@ public class MedicoModel implements Serializable {
     @OneToMany(mappedBy = "medico", fetch = FetchType.LAZY)
     private Set<ConsultaModel> consultas = new HashSet<>();
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @OneToMany(mappedBy = "medico", fetch = FetchType.LAZY)
+    private Set<HorarioMedico> horario = new HashSet<>();
+
     @OneToOne
     @JoinColumn(name = "usuario_id")
     private UsuarioModel usuario;

@@ -1,4 +1,6 @@
 package com.example.consultas.dtos;
 
-public record LoginResponseDto(String token) {
+import java.util.UUID;
+
+public record LoginResponseDto(String token, String role) {
 }

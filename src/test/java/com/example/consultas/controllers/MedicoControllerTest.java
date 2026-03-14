@@ -170,7 +170,7 @@ class MedicoControllerTest {
 
         Page<MedicoResponseDto> medicosDtos = new PageImpl<>(List.of(medico1, medico2));
 
-        when(medicoService.getAllMedicos(ArgumentMatchers.any(Pageable.class))).thenReturn(medicosDtos);
+        when(medicoService.getAllMedicos(ArgumentMatchers.any(Pageable.class), null, null)).thenReturn(medicosDtos);
 
         mockMvc.perform(get("/api/v1/medicos")
                         .param("page", "0")
@@ -187,7 +187,7 @@ class MedicoControllerTest {
                         jsonPath("$._embedded.medicoResponseDtoList[1].id").value(medico2.id().toString()),
                         jsonPath("$._embedded.medicoResponseDtoList[1]._links.self.href").exists());
 
-        verify(medicoService).getAllMedicos(any());
+        verify(medicoService).getAllMedicos(any(), null, null);
     }
 
     @Test
@@ -318,7 +318,7 @@ class MedicoControllerTest {
     }
 
     private MedicoResponseDto gerarMedicoResponse() {
-        return new MedicoResponseDto(UUID.randomUUID(), "Claudio", "123456", "claudio.silva@gmail.com", "(71)99999-9999", "Clinico Geral");
+        return new MedicoResponseDto(UUID.randomUUID(), "Claudio", "123456", "claudio.silva@gmail.com", "(71)99999-9999", "Clinico Geral", null);
     }
 
 }

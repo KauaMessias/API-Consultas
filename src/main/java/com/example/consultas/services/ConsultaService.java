@@ -1,16 +1,11 @@
 package com.example.consultas.services;
 
-import com.example.consultas.dtos.consulta.ConsultaDto;
-import com.example.consultas.dtos.consulta.ConsultaResponseDto;
-import com.example.consultas.dtos.consulta.ConsultaUpdateDto;
+import com.example.consultas.dtos.consulta.*;
 import com.example.consultas.exceptions.ClienteNotFoundException;
 import com.example.consultas.exceptions.ConflitoConsultaException;
 import com.example.consultas.exceptions.ConsultaNotFoundException;
 import com.example.consultas.exceptions.MedicoNotFoundException;
-import com.example.consultas.models.ClienteModel;
-import com.example.consultas.models.ConsultaModel;
-import com.example.consultas.models.MedicoModel;
-import com.example.consultas.models.Status;
+import com.example.consultas.models.*;
 import com.example.consultas.repositories.ClienteRepository;
 import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.MedicoRepository;
@@ -154,21 +149,45 @@ public class ConsultaService {
 
 
     @Transactional
-    public void alterarStatusConsulta(UUID id, Status status) {
+    public void alterarStatusConsulta(UUID id, String status) {
         ConsultaModel consultaModel = consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new);
 
         verificarStatusConsulta(consultaModel);
-        consultaModel.setStatus(status);
+        consultaModel.setStatus(Status.valueOf(status));
         consultaRepository.save(consultaModel);
     }
 
-    
+
     private void verificarStatusConsulta(ConsultaModel consultaModel) {
         if (consultaModel.getStatus().equals(Status.CANCELADA) || consultaModel.getStatus().equals(Status.CONCLUIDA)) {
             log.warn("Consulta {}", consultaModel.getStatus());
-            throw new ConflitoConsultaException("Consulta "+ consultaModel.getStatus());
+            throw new ConflitoConsultaException("Consulta " + consultaModel.getStatus());
 
         }
+    }
+
+    public Page<ConsultaMedicoDto> buscarConsultasMedico(UsuarioModel usuarioModel, Pageable pageable) {
+        log.info("Buscando consultas do usuário com id {}", usuarioModel.getId());
+
+        Page<ConsultaMedicoDto> response;
+
+        response = consultaRepository.findByMedico_UsuarioId(usuarioModel.getId(), pageable).map(ConsultaMedicoDto::new);
+
+        log.info("{} consultas encontradas", response.getTotalElements());
+
+        return response;
+    }
+
+    public Page<ConsultaClienteDto> buscarConsultasCliente(UsuarioModel usuarioModel, Pageable pageable) {
+        log.info("Buscando consultas do usuário com id {}", usuarioModel.getId());
+
+        Page<ConsultaClienteDto> response;
+
+        response = consultaRepository.findByCliente_UsuarioId(usuarioModel.getId(), pageable).map(ConsultaClienteDto::new);
+
+        log.info("{} consultas encontradas", response.getTotalElements());
+
+        return response;
     }
 }
 

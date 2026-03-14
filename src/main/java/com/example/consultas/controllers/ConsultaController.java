@@ -1,9 +1,8 @@
 package com.example.consultas.controllers;
 
-import com.example.consultas.dtos.consulta.ConsultaDto;
-import com.example.consultas.dtos.consulta.ConsultaResponseDto;
-import com.example.consultas.dtos.consulta.ConsultaUpdateDto;
+import com.example.consultas.dtos.consulta.*;
 import com.example.consultas.models.Status;
+import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.security.SecurityConfigurations;
 import com.example.consultas.services.ConsultaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -125,8 +127,26 @@ public class ConsultaController {
     @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoConsulta(#id, authentication)")
-    public ResponseEntity<Void> alterarStatusConsulta(@PathVariable UUID id, @RequestParam Status status) {
+    public ResponseEntity<Void> alterarStatusConsulta(@PathVariable UUID id, @RequestParam String status) {
         consultaService.alterarStatusConsulta(id, status);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @GetMapping("cliente/minhasConsultas")
+    public ResponseEntity<Page<ConsultaClienteDto>> consultasCliente(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(20) int size){
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ConsultaClienteDto> response = consultaService.buscarConsultasCliente(usuarioModel, pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("medico/minhasConsultas")
+    public ResponseEntity<Page<ConsultaMedicoDto>> consultasMedico(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(20) int size){
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ConsultaMedicoDto> response = consultaService.buscarConsultasMedico(usuarioModel, pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }

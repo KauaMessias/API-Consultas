@@ -336,7 +336,7 @@ class ConsultaServiceTest {
 
         when(consultaRepository.findById(consultaId)).thenReturn(Optional.of(consulta));
 
-        consultaService.alterarStatusConsulta(consultaId, Status.CONCLUIDA);
+        consultaService.alterarStatusConsulta(consultaId, "CONCLUIDA");
         verify(consultaRepository).save(consultaCaptor.capture());
         ConsultaModel consultaModel = consultaCaptor.getValue();
 
@@ -350,7 +350,7 @@ class ConsultaServiceTest {
 
         when(consultaRepository.findById(consultaId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(ConsultaNotFoundException.class, () -> consultaService.alterarStatusConsulta(consultaId, Status.PENDENTE));
+        Exception exception = assertThrows(ConsultaNotFoundException.class, () -> consultaService.alterarStatusConsulta(consultaId, "PENDENTE"));
 
         assertEquals("Consulta não encontrada.", exception.getMessage());
 
@@ -359,7 +359,7 @@ class ConsultaServiceTest {
 
 
     private MedicoModel criarMedico(){
-        return new MedicoModel(UUID.randomUUID(), "Jorge", "4325", "(71)99999-9999", "Urologista", null, null);
+        return new MedicoModel(UUID.randomUUID(), "Jorge", "4325", "(71)99999-9999", "Urologista", null, null, null);
     }
 
     private ClienteModel criarCliente(){

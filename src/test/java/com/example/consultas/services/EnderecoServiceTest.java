@@ -47,7 +47,7 @@ class EnderecoServiceTest {
         endereco.setUsuario(usuario);
         ArgumentCaptor<EnderecoModel> enderecoCaptor = ArgumentCaptor.forClass(EnderecoModel.class);
 
-        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41853865", "Brotas", "Rua dos Bobos", "69");
+        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41853865", "Brotas", "Rua dos Bobos", "69", true);
 
         when(enderecoRepository.save(any(EnderecoModel.class))).thenReturn(endereco);
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
@@ -73,7 +73,7 @@ class EnderecoServiceTest {
     @DisplayName("Não deve gerar um endereço se o usuário não existir.")
     void addEnderecoNotFound() {
         UUID usuario_id = UUID.randomUUID();
-        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41853865", "Brotas", "Rua dos Bobos", "69");
+        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41853865", "Brotas", "Rua dos Bobos", "69", true);
 
         when(usuarioRepository.findById(usuario_id)).thenReturn(Optional.empty());
 
@@ -85,7 +85,7 @@ class EnderecoServiceTest {
     @DisplayName("Deve atualizar o endereço.")
     void updateEndereco() {
         EnderecoModel endereco = gerarEndereco();
-        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41855976", "Rio Vermelho", "Rua Alegre", "21");
+        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41855976", "Rio Vermelho", "Rua Alegre", "21", true);
         ArgumentCaptor<EnderecoModel> enderecoCaptor = ArgumentCaptor.forClass(EnderecoModel.class);
 
         when(enderecoRepository.findById(endereco.getId())).thenReturn(Optional.of(endereco));
@@ -110,7 +110,7 @@ class EnderecoServiceTest {
     @DisplayName("Não deve atualizar o endereço se ele não existe.")
     void updateEnderecoNotFound() {
         UUID endereco_id = UUID.randomUUID();
-        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41855976", "Rio Vermelho", "Rua Alegre", "21");
+        EnderecoDto enderecoDto = new EnderecoDto(null, "BA", "Salvador", "41855976", "Rio Vermelho", "Rua Alegre", "21", true);
 
         when(enderecoRepository.findById(endereco_id)).thenReturn(Optional.empty());
 
@@ -232,6 +232,6 @@ class EnderecoServiceTest {
     }
 
     EnderecoModel gerarEndereco() {
-        return new EnderecoModel(UUID.randomUUID(), "BA", "Salvador", "41853865", "Brotas", "Rua dos Bobos", "69", null);
+        return new EnderecoModel(UUID.randomUUID(), "BA", "Salvador", "41853865", "Brotas", "Rua dos Bobos", "69", null, null);
     }
 }

@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
@@ -40,6 +41,10 @@ public class EnderecoService {
         EnderecoModel endereco = enderecoDto.toEntity();
 
         endereco.setUsuario(usuario);
+
+        if(!enderecoRepository.existsByUsuario_Id(usuario_id)){
+            endereco.setPrincipal(true);
+        }
 
         endereco = enderecoRepository.save(endereco);
         log.info("Endereço com o id {} criado com sucesso", endereco.getId());
@@ -99,5 +104,18 @@ public class EnderecoService {
         enderecoRepository.delete(endereco);
 
         log.info("Endereço deletado com sucesso");
+    }
+
+    @Transactional
+    public EnderecoDto mudarPrincipal(UUID id, UsuarioModel usuarioModel){
+        EnderecoModel principal = enderecoRepository.findByUsuario_IdAndPrincipal(usuarioModel.getId(), true);
+        principal.setPrincipal(false);
+        enderecoRepository.save(principal);
+
+        EnderecoModel endereco = enderecoRepository.findById(id).orElseThrow(EnderecoNotFoundException::new);
+        endereco.setPrincipal(true);
+        enderecoRepository.save(endereco);
+
+        return new EnderecoDto(endereco);
     }
 }

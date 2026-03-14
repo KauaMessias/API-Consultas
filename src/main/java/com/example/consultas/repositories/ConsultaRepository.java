@@ -1,5 +1,6 @@
 package com.example.consultas.repositories;
 
+import com.example.consultas.dtos.consulta.ConsultaResponseDto;
 import com.example.consultas.models.ConsultaModel;
 import com.example.consultas.models.Status;
 import com.example.consultas.models.UsuarioModel;
@@ -61,4 +62,7 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
     void deleteByCliente_Id(UUID clienteId);
 
 
+    Page<ConsultaModel> findByMedico_UsuarioId(UUID medicoUsuarioId, Pageable pageable);
+
+    Page<ConsultaModel> findByCliente_UsuarioId(UUID clienteUsuarioId, Pageable pageable);
 }

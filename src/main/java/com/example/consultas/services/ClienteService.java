@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.UUID;
 
@@ -138,6 +139,14 @@ public class ClienteService {
             log.warn("Email já cadastrado");
             throw new EntityExistsException("Email já cadastrado.");
         }
+    }
+
+    public ClienteResponseDto exibirPerfil(UsuarioModel usuarioModel){
+        if(!usuarioModel.getRole().equals(Roles.CLIENTE)){
+            throw new ResourceAccessException("Acesso negado");
+        }
+
+        return new ClienteResponseDto(clienteRepository.findByUsuario_Id(usuarioModel.getId()).orElseThrow(ClienteNotFoundException::new));
     }
 
 }
