@@ -7,8 +7,10 @@ import com.example.consultas.models.UsuarioModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.nio.channels.FileChannel;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -61,8 +63,35 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
 
     void deleteByCliente_Id(UUID clienteId);
 
-
+    @Query("select c from ConsultaModel c where c.medico.usuario.id = :medicoUsuarioId order by c.status, c.dataConsulta")
     Page<ConsultaModel> findByMedico_UsuarioId(UUID medicoUsuarioId, Pageable pageable);
 
+    @Query("select c from ConsultaModel c where c.cliente.usuario.id = :clienteUsuarioId order by c.status, c.dataConsulta")
     Page<ConsultaModel> findByCliente_UsuarioId(UUID clienteUsuarioId, Pageable pageable);
+
+    Page<ConsultaModel> findByMedico_UsuarioIdOrderByStatus(UUID medicoUsuarioId, Pageable pageable);
+
+    Page<ConsultaModel> findByCliente_UsuarioIdOrderByStatus(UUID clienteUsuarioId, Pageable pageable);
+
+    Page<ConsultaModel> findByCliente_IdOrderByStatus(UUID clienteId, Pageable pageable);
+
+    Page<ConsultaModel> findByMedico_IdOrderByStatus(UUID medicoId, Pageable pageable);
+
+    boolean existsByMedico_IdAndDataConsulta(UUID medicoId, LocalDateTime dataConsulta);
+
+    boolean existsByMedico_IdAndDataConsultaBetweenAndStatus(UUID medicoId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, Status status);
+
+    boolean existsByCliente_IdAndDataConsultaBetweenAndStatus(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, Status status);
+
+    boolean existsByMedico_IdAndDataConsultaBetweenAndIdNotAndStatus(UUID medicoId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
+
+    boolean existsByCliente_IdAndDataConsultaBetweenAndIdNotAndStatus(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
+
+    boolean existsByCliente_IdAndDataConsultaBetweenAndIdNotAndStatusNot(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
+
+    boolean existsByMedico_IdAndDataConsultaBetweenAndIdNotAndStatusNot(UUID medicoId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
+
+    boolean existsByMedico_IdAndDataConsultaBetweenAndStatusNot(UUID medicoId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, Status status);
+
+    boolean existsByCliente_IdAndDataConsultaBetweenAndStatusNot(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, Status status);
 }

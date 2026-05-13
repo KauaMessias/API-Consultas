@@ -6,6 +6,7 @@ import com.example.consultas.dtos.medico.MedicoRequestDto;
 import com.example.consultas.dtos.medico.MedicoResponseDto;
 import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.security.SecurityConfigurations;
+import com.example.consultas.security.UserAuthorization;
 import com.example.consultas.services.MedicoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -80,8 +81,8 @@ public class MedicoController {
     @ApiResponse(responseCode = "403", description = "Acesso negado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     public ResponseEntity<Page<MedicoResponseDto>> getAllMedicos(@RequestParam(defaultValue = "0", value = "page") @Min(0) int page,
-                                                                                         @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(25) int size,
-                                                                                         @RequestParam(required = false) String especialidade, @RequestParam(required = false) String cidade) {
+                                                                 @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(25) int size,
+                                                                 @RequestParam(required = false) String especialidade, @RequestParam(required = false) String cidade) {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<MedicoResponseDto> medicoResponseDtos = medicoService.getAllMedicos(pageable, especialidade, cidade);
@@ -119,44 +120,44 @@ public class MedicoController {
     }
 
     @GetMapping("/perfil")
-    public ResponseEntity<MedicoResponseDto> meuPerfil(@AuthenticationPrincipal UsuarioModel usuarioModel){
+    public ResponseEntity<MedicoResponseDto> meuPerfil(@AuthenticationPrincipal UsuarioModel usuarioModel) {
         MedicoResponseDto response = medicoService.exibirPerfil(usuarioModel);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/horarios")
-    public ResponseEntity<HorarioDto> criarHorarios(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestBody @Valid HorarioDto horarioDto){
+    public ResponseEntity<HorarioDto> criarHorarios(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestBody @Valid HorarioDto horarioDto) {
         HorarioDto response = medicoService.addHorario(usuarioModel, horarioDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 
     @GetMapping("/{id}/horarios")
-    public ResponseEntity<List<HorarioDto>> getAllHorarios(@PathVariable UUID id){
+    @PreAuthorize("@authz.acessoMedico(#id, authentication)")
+    public ResponseEntity<List<HorarioDto>> getAllHorarios(@PathVariable UUID id) {
         List<HorarioDto> response = medicoService.getAllHorarios(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/horarios/disponiveis")
-    public ResponseEntity<List<HorarioDisponivelDto>> getHorariosDisponiveis(@PathVariable UUID id, @RequestParam LocalDate data){
+    public ResponseEntity<List<HorarioDisponivelDto>> getHorariosDisponiveis(@PathVariable UUID id, @RequestParam LocalDate data) {
         return ResponseEntity.ok(medicoService.getHorariosDisponiveis(id, data));
     }
 
 
     @PatchMapping("/horarios/{id}")
-    public ResponseEntity<HorarioDto> mudarStatusHorario(@PathVariable UUID id){
+    @PreAuthorize("@authz.acessoHorario(#id, authentication)")
+    public ResponseEntity<HorarioDto> mudarStatusHorario(@PathVariable UUID id) {
         HorarioDto response = medicoService.mudarStatusHorario(id);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/horarios/{id}")
-    public ResponseEntity<Void> removerHorario(@PathVariable UUID id){
+    @PreAuthorize("@authz.acessoHorario(#id, authentication)")
+    public ResponseEntity<Void> removerHorario(@PathVariable UUID id) {
         medicoService.deletarHorario(id);
         return ResponseEntity.noContent().build();
     }
-
-
-
 
 
 }

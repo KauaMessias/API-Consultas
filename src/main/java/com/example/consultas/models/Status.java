@@ -1,7 +1,7 @@
 package com.example.consultas.models;
 
 public enum Status {
-    CONCLUIDA("concluida"), PENDENTE("pendente"), CANCELADA("cancelada");
+    PENDENTE("pendente"), CONCLUIDA("concluida"), CANCELADA("cancelada");
     private String status;
 
     private Status(String status) {

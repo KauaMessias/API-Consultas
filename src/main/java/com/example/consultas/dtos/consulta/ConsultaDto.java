@@ -9,10 +9,10 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record ConsultaDto(@NotNull @Future LocalDateTime dataConsulta, @NotBlank String tipoConsulta, @NotBlank String descricaoConsulta, @NotNull UUID medico_id, @NotNull UUID cliente_id) {
+public record ConsultaDto(@NotNull @Future LocalDateTime dataConsulta, @NotBlank String tipoConsulta, @NotBlank String descricaoConsulta, @NotNull UUID medico_id) {
 
    public ConsultaDto(ConsultaModel consultaModel){
-       this(consultaModel.getDataConsulta(), consultaModel.getTipoConsulta(), consultaModel.getDescricaoConsulta(), consultaModel.getMedico().getId(), consultaModel.getCliente().getId());
+       this(consultaModel.getDataConsulta(), consultaModel.getTipoConsulta(), consultaModel.getDescricaoConsulta(), consultaModel.getMedico().getId());
    }
 
    public ConsultaModel toEntity() {

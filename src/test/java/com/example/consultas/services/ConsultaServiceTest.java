@@ -7,10 +7,7 @@ import com.example.consultas.exceptions.ClienteNotFoundException;
 import com.example.consultas.exceptions.ConflitoConsultaException;
 import com.example.consultas.exceptions.ConsultaNotFoundException;
 import com.example.consultas.exceptions.MedicoNotFoundException;
-import com.example.consultas.models.ClienteModel;
-import com.example.consultas.models.ConsultaModel;
-import com.example.consultas.models.MedicoModel;
-import com.example.consultas.models.Status;
+import com.example.consultas.models.*;
 import com.example.consultas.repositories.ClienteRepository;
 import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.MedicoRepository;
@@ -117,7 +114,7 @@ class ConsultaServiceTest {
         when(consultaRepository.existsByCliente_IdAndDataConsultaBetween(any(), any(), any())).thenReturn(false);
 
 
-        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
 
         ConsultaModel saved = new ConsultaModel();
         saved.setId(UUID.randomUUID());
@@ -129,7 +126,7 @@ class ConsultaServiceTest {
 
         when(consultaRepository.save(any())).thenReturn(saved);
 
-        ConsultaResponseDto result = consultaService.addConsulta(consultaDto);
+        ConsultaResponseDto result = consultaService.addConsulta(consultaDto, new UsuarioModel());
 
         verify(consultaRepository, times(1)).save(any());
 
@@ -138,7 +135,6 @@ class ConsultaServiceTest {
         assertEquals(result.data(), consultaDto.dataConsulta());
         assertEquals(result.tipo(), consultaDto.tipoConsulta());
         assertEquals(result.medicoId(), consultaDto.medico_id());
-        assertEquals(result.clienteId(), consultaDto.cliente_id());
     }
 
     @Test
@@ -157,9 +153,9 @@ class ConsultaServiceTest {
         when(medicoRepository.findById(medicoId)).thenReturn(Optional.of(medico));
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
-        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
 
-        Exception exception = assertThrows(ClienteNotFoundException.class, () -> consultaService.addConsulta(consultaDto));
+        Exception exception = assertThrows(ClienteNotFoundException.class, () -> consultaService.addConsulta(consultaDto, new UsuarioModel()));
         assertEquals("Cliente não encontrado.", exception.getMessage());
         verify(consultaRepository, never()).save(any(ConsultaModel.class));
     }
@@ -178,9 +174,9 @@ class ConsultaServiceTest {
 
         when(medicoRepository.findById(medicoId)).thenReturn(Optional.empty());
 
-        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
 
-        Exception exception = assertThrows(MedicoNotFoundException.class, () -> consultaService.addConsulta(consultaDto));
+        Exception exception = assertThrows(MedicoNotFoundException.class, () -> consultaService.addConsulta(consultaDto, new UsuarioModel()));
         assertEquals("Medico não encontrado.", exception.getMessage());
         verify(consultaRepository, never()).save(any(ConsultaModel.class));
     }
@@ -207,9 +203,9 @@ class ConsultaServiceTest {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
         when(consultaRepository.existsByMedico_IdAndDataConsultaBetween(any(), any(), any())).thenReturn(true);
 
-        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaDto = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
 
-        Exception exception = assertThrows(ConflitoConsultaException.class, () -> consultaService.addConsulta(consultaDto));
+        Exception exception = assertThrows(ConflitoConsultaException.class, () -> consultaService.addConsulta(consultaDto, new UsuarioModel()));
 
         assertEquals("Médico já possui uma consulta no horário.", exception.getMessage());
         verify(consultaRepository, never()).save(any(ConsultaModel.class));
@@ -238,9 +234,9 @@ class ConsultaServiceTest {
         when(consultaRepository.existsByMedico_IdAndDataConsultaBetween(any(), any(), any())).thenReturn(false);
         when(consultaRepository.existsByCliente_IdAndDataConsultaBetween(any(), any(), any())).thenReturn(true);
 
-        ConsultaDto consultaDto = new ConsultaDto(data,  "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaDto = new ConsultaDto(data,  "Rotina", "Consulta de rotina", medicoId);
 
-        Exception exception = assertThrows(ConflitoConsultaException.class, () -> consultaService.addConsulta(consultaDto));
+        Exception exception = assertThrows(ConflitoConsultaException.class, () -> consultaService.addConsulta(consultaDto, new UsuarioModel()));
 
         assertEquals("Cliente já possui uma consulta no horário.", exception.getMessage());
         verify(consultaRepository, never()).save(any(ConsultaModel.class));

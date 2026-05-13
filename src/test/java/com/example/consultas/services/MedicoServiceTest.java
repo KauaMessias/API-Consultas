@@ -301,6 +301,6 @@ class MedicoServiceTest {
     }
 
     private UsuarioModel gerarUsuario() {
-        return new UsuarioModel(UUID.randomUUID(), "roberto@gmail.com", "1234", Roles.MEDICO, true, null);
+        return new UsuarioModel(UUID.randomUUID(), "roberto@gmail.com", "1234", Roles.MEDICO, true,null, null);
     }
 }

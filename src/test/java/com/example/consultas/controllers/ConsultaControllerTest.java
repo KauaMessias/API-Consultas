@@ -8,6 +8,7 @@ import com.example.consultas.exceptions.ConflitoConsultaException;
 import com.example.consultas.exceptions.ConsultaNotFoundException;
 import com.example.consultas.exceptions.MedicoNotFoundException;
 import com.example.consultas.models.Status;
+import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.repositories.UsuarioRepository;
 import com.example.consultas.security.TokenService;
 import com.example.consultas.services.ConsultaService;
@@ -67,10 +68,10 @@ class ConsultaControllerTest {
         UUID medicoId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
 
-        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
         ConsultaResponseDto consultaResponse = new ConsultaResponseDto(UUID.randomUUID(), data, "Rotina", "Consulta de rotina", Status.PENDENTE, medicoId, clienteId);
 
-        when(consultaService.addConsulta(any(ConsultaDto.class))).thenReturn(consultaResponse);
+        when(consultaService.addConsulta(any(ConsultaDto.class), any(UsuarioModel.class))).thenReturn(consultaResponse);
 
         mockMvc.perform(post("/api/v1/consultas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,7 +88,7 @@ class ConsultaControllerTest {
                         jsonPath("$.clienteId", is(clienteId.toString()))
                 );
 
-        verify(consultaService).addConsulta(any(ConsultaDto.class));
+        verify(consultaService).addConsulta(any(ConsultaDto.class), any(UsuarioModel.class));
     }
 
     @Test
@@ -96,10 +97,10 @@ class ConsultaControllerTest {
         UUID medicoId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
 
-        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
         MedicoNotFoundException e = new MedicoNotFoundException();
 
-        when(consultaService.addConsulta(any(ConsultaDto.class))).thenThrow(e);
+        when(consultaService.addConsulta(any(ConsultaDto.class), any(UsuarioModel.class))).thenThrow(e);
 
         mockMvc.perform(post("/api/v1/consultas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -112,7 +113,7 @@ class ConsultaControllerTest {
                         jsonPath("$.path", is("/api/v1/consultas"))
                 );
 
-        verify(consultaService).addConsulta(any(ConsultaDto.class));
+        verify(consultaService).addConsulta(any(ConsultaDto.class), any(UsuarioModel.class));
     }
 
     @Test
@@ -121,10 +122,10 @@ class ConsultaControllerTest {
         UUID medicoId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
 
-        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
         ClienteNotFoundException e = new ClienteNotFoundException();
 
-        when(consultaService.addConsulta(any(ConsultaDto.class))).thenThrow(e);
+        when(consultaService.addConsulta(any(ConsultaDto.class),any(UsuarioModel.class))).thenThrow(e);
 
         mockMvc.perform(post("/api/v1/consultas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -137,7 +138,7 @@ class ConsultaControllerTest {
                         jsonPath("$.path", is("/api/v1/consultas"))
                 );
 
-        verify(consultaService).addConsulta(any(ConsultaDto.class));
+        verify(consultaService).addConsulta(any(ConsultaDto.class), any(UsuarioModel.class));
     }
 
     @Test
@@ -145,10 +146,10 @@ class ConsultaControllerTest {
     void addConsultaConflitoNoHorario() throws Exception {
         UUID medicoId = UUID.randomUUID();
         UUID clienteId = UUID.randomUUID();
-        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId, clienteId);
+        ConsultaDto consultaRequest = new ConsultaDto(data, "Rotina", "Consulta de rotina", medicoId);
         ConflitoConsultaException e = new ConflitoConsultaException();
 
-        when(consultaService.addConsulta(any(ConsultaDto.class))).thenThrow(e);
+        when(consultaService.addConsulta(any(ConsultaDto.class), any(UsuarioModel.class))).thenThrow(e);
 
         mockMvc.perform(post("/api/v1/consultas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -161,7 +162,7 @@ class ConsultaControllerTest {
                         jsonPath("$.path", is("/api/v1/consultas"))
                 );
 
-        verify(consultaService).addConsulta(any(ConsultaDto.class));
+        verify(consultaService).addConsulta(any(ConsultaDto.class), any(UsuarioModel.class));
     }
 
 

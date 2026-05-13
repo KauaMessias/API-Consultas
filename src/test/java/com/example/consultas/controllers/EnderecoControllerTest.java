@@ -264,6 +264,6 @@ class EnderecoControllerTest {
     }
 
     private UsuarioModel gerarUsuario() {
-        return new UsuarioModel(UUID.randomUUID(), "carlos@gmail.com", "12345", Roles.MEDICO, true, null);
+        return new UsuarioModel(UUID.randomUUID(), "carlos@gmail.com", "12345", Roles.MEDICO, true, null, null);
     }
 }

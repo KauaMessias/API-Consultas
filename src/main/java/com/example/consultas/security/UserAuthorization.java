@@ -2,14 +2,12 @@ package com.example.consultas.security;
 
 import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
-import com.example.consultas.repositories.ClienteRepository;
-import com.example.consultas.repositories.ConsultaRepository;
-import com.example.consultas.repositories.EnderecoRepository;
-import com.example.consultas.repositories.MedicoRepository;
+import com.example.consultas.repositories.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import javax.management.relation.Role;
 import java.util.UUID;
 
 @Component("authz")
@@ -19,17 +17,19 @@ public class UserAuthorization {
     private final ClienteRepository clienteRepository;
     private final EnderecoRepository enderecoRepository;
     private final ConsultaRepository consultaRepository;
+    private final HorarioRepository horarioRepository;
 
-    public UserAuthorization(MedicoRepository medicoRepository, ClienteRepository clienteRepository, EnderecoRepository enderecoRepository, ConsultaRepository consultaRepository) {
+    public UserAuthorization(MedicoRepository medicoRepository, ClienteRepository clienteRepository, EnderecoRepository enderecoRepository, ConsultaRepository consultaRepository, HorarioRepository horarioRepository) {
         this.medicoRepository = medicoRepository;
         this.clienteRepository = clienteRepository;
         this.enderecoRepository = enderecoRepository;
         this.consultaRepository = consultaRepository;
+        this.horarioRepository = horarioRepository;
     }
 
     public boolean acessoCliente(UUID id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
-        if(!usuario.isEnabled()) return false;
+        if (!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
@@ -47,7 +47,7 @@ public class UserAuthorization {
 
     public boolean acessoMedico(UUID medico_id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
-        if(!usuario.isEnabled()) return false;
+        if (!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
@@ -58,7 +58,7 @@ public class UserAuthorization {
 
     public boolean acessoConsulta(UUID id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
-        if(!usuario.isEnabled()) return false;
+        if (!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
@@ -77,14 +77,23 @@ public class UserAuthorization {
 
     public boolean acessoEndereco(UUID endereco_id, Authentication authentication) {
         UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
-        if(!usuario.isEnabled()) return false;
+        if (!usuario.isEnabled()) return false;
 
         if (hasRole(usuario, Roles.ADMIN)) {
             return true;
         }
         return enderecoRepository.existsByIdAndUsuario_Id(endereco_id, usuario.getId());
-        }
+    }
 
+    public boolean acessoHorario(UUID horarioId, Authentication authentication){
+        UsuarioModel usuario = (UsuarioModel) authentication.getPrincipal();
+        if (!usuario.isEnabled()) return false;
+
+        if (hasRole(usuario, Roles.ADMIN)) {
+            return true;
+        }
+        return (horarioRepository.existsByIdAndMedico_Usuario_Id(horarioId, usuario.getId()));
+    }
 
     public boolean hasRole(UsuarioModel usuario, Roles role) {
         return usuario.getRole().equals(role);

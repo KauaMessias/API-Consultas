@@ -1,4 +1,4 @@
-package com.example.consultas.dtos;
+package com.example.consultas.dtos.auth;
 
 import jakarta.validation.constraints.NotBlank;
 

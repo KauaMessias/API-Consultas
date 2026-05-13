@@ -1,6 +1,6 @@
 package com.example.consultas.repositories;
 
-import com.example.consultas.dtos.AuthenticationDto;
+import com.example.consultas.dtos.auth.AuthenticationDto;
 import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
 import jakarta.persistence.EntityManager;
@@ -14,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")

@@ -324,6 +324,6 @@ class ClienteServiceTest {
     }
 
     private UsuarioModel gerarUsuario() {
-        return new UsuarioModel(UUID.randomUUID(), "claudio@gmail.com", "12345", Roles.CLIENTE, true, null);
+        return new UsuarioModel(UUID.randomUUID(), "claudio@gmail.com", "12345", Roles.CLIENTE, true, null, null);
     }
 }

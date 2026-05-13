@@ -1,16 +1,13 @@
 package com.example.consultas.repositories;
 
-import com.example.consultas.dtos.AuthenticationDto;
 import com.example.consultas.models.MedicoModel;
 import com.example.consultas.models.Roles;
 import com.example.consultas.models.UsuarioModel;
 import jakarta.persistence.EntityManager;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

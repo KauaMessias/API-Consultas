@@ -17,4 +17,6 @@ public interface HorarioRepository extends JpaRepository<HorarioMedico, UUID> {
     List<HorarioMedico> findByMedico_Id(UUID medicoId);
 
     List<HorarioMedico> findByDiaSemanaAndMedico_Id(DiaSemana diaSemana, UUID medicoId);
+
+    boolean existsByIdAndMedico_Usuario_Id(UUID id, UUID medicoUsuarioId);
 }

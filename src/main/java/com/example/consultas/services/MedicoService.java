@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -220,7 +221,9 @@ public class MedicoService {
                     List<LocalTime> horas = new ArrayList<>();
                     LocalTime horaInicio = horario.getHorarioInicio();
                     while (horaInicio.isBefore(horario.getHorarioFinal())) {
-                        horas.add(horaInicio);
+                        if (!consultaRepository.existsByMedico_IdAndDataConsulta(id, LocalDateTime.of(data, horaInicio))) {
+                            horas.add(horaInicio);
+                        }
                         horaInicio = horaInicio.plusMinutes(horario.getDuracao());
                     }
                     return horas.stream().map(hora -> new HorarioDisponivelDto(data, hora, horario.getId()));

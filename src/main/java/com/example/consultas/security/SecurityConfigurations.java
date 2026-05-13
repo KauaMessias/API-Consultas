@@ -43,37 +43,37 @@ public class SecurityConfigurations {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity, CorsConfigurationSource corsConfigurationSource) throws Exception {
         return httpSecurity
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/medicos").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/clientes").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/enderecos").hasAnyRole("MEDICO")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/enderecos/**").hasAnyRole("MEDICO", "CLIENTE")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/enderecos/**").hasAnyRole("MEDICO")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/enderecos/**").hasAnyRole("MEDICO")
                         .requestMatchers(HttpMethod.GET, "/api/v1/medicos").hasAnyRole("MEDICO", "CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/medicos/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.POST, "/api/v1/consultas").hasRole("CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/clientes/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/v1/medicos/{id}/horarios").hasRole("MEDICO")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/medicos/horarios/{id}").hasRole("MEDICO")
                                 .requestMatchers(HttpMethod.POST, "/api/v1/medicos/horarios").hasRole("MEDICO")
                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/medicos/horarios/{id}").hasRole("MEDICO")
                         .requestMatchers(HttpMethod.GET, "/api/v1/medicos/{id}/horarios/disponiveis").hasAnyRole("MEDICO", "CLIENTE")
-
-
                         .requestMatchers(HttpMethod.PUT, "/api/v1/clientes/**").hasRole("CLIENTE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/clientes/**").hasRole("CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/medicos/**").hasAnyRole("MEDICO", "CLIENTE")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/medicos/**").hasRole("MEDICO")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/medicos/**").hasRole("MEDICO")
                         .requestMatchers(HttpMethod.GET, "/api/v1/medicos/perfil").hasRole("MEDICO")
                         .requestMatchers(HttpMethod.GET, "/api/v1/clientes/perfil").hasRole("CLIENTE")
-                        .requestMatchers( "/", "/error", "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-ui/index.html").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/enderecos/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/enderecos/**").hasAnyRole("MEDICO")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/enderecos/**").hasAnyRole("MEDICO")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/consultas/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/clientes/**").hasAnyRole("MEDICO", "CLIENTE")
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -82,7 +82,7 @@ public class SecurityConfigurations {
     @Bean
    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4173", FRONTEND_URL));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4173", "http://127.0.0.1:5173", FRONTEND_URL));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowCredentials(true);

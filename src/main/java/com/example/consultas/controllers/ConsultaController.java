@@ -48,8 +48,8 @@ public class ConsultaController {
     @ApiResponse(responseCode = "404", description = "Cliente ou Médico não encontrado")
     @ApiResponse(responseCode = "409", description = "Conflito no horário da consulta")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
-    public ResponseEntity<EntityModel<ConsultaResponseDto>> addConsulta(@RequestBody @Valid ConsultaDto consultaDto) {
-        ConsultaResponseDto consulta = consultaService.addConsulta(consultaDto);
+    public ResponseEntity<EntityModel<ConsultaResponseDto>> addConsulta(@RequestBody @Valid ConsultaDto consultaDto, @AuthenticationPrincipal UsuarioModel usuario) {
+        ConsultaResponseDto consulta = consultaService.addConsulta(consultaDto, usuario);
         EntityModel<ConsultaResponseDto> consultaEntity = EntityModel.of(consulta).add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel());
         URI local = linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).toUri();
 

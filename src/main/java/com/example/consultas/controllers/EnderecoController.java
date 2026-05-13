@@ -113,6 +113,7 @@ public class EnderecoController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("@authz.acessoEndereco(@id, authentication)")
     public ResponseEntity<EnderecoDto> mudarPrincipal(@PathVariable(value = "id") UUID id, @AuthenticationPrincipal UsuarioModel usuarioModel){
         EnderecoDto response = enderecoService.mudarPrincipal(id, usuarioModel);
         return ResponseEntity.ok(response);
