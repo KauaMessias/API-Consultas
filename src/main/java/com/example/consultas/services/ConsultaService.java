@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -149,20 +150,30 @@ public class ConsultaService {
 
 
     @Transactional
-    public void alterarStatusConsulta(UUID id, String status) {
+    public ConsultaResponseDto alterarStatusConsulta(UUID id, String status) {
         ConsultaModel consultaModel = consultaRepository.findById(id).orElseThrow(ConsultaNotFoundException::new);
+        Status statusNovo;
+        try {
+            statusNovo = Status.valueOf(status);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new ConflitoConsultaException("Status inválido");
+        }
 
         verificarStatusConsulta(consultaModel);
-        consultaModel.setStatus(Status.valueOf(status));
-        consultaRepository.save(consultaModel);
+
+        if (statusNovo.equals(Status.CONCLUIDA) && consultaModel.getDataConsulta().isAfter(LocalDateTime.now()))
+            throw new ConflitoConsultaException("Consulta ainda não ocorreu.");
+
+        consultaModel.setStatus(statusNovo);
+
+        return new ConsultaResponseDto(consultaRepository.save(consultaModel));
     }
 
 
     private void verificarStatusConsulta(ConsultaModel consultaModel) {
-        if (consultaModel.getStatus().equals(Status.CANCELADA) || consultaModel.getStatus().equals(Status.CONCLUIDA)) {
+        if (!consultaModel.getStatus().equals(Status.PENDENTE)) {
             log.warn("Consulta {}", consultaModel.getStatus());
             throw new ConflitoConsultaException("Consulta " + consultaModel.getStatus());
-
         }
     }
 

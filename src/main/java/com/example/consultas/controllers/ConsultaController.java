@@ -77,10 +77,10 @@ public class ConsultaController {
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoMedico(#medico_id, authentication)")
     public ResponseEntity<Page<EntityModel<ConsultaResponseDto>>> getConsultaByMedicoId(@PathVariable(value = "medico_id") UUID medico_id, @RequestParam(value = "page", defaultValue = "0") int page,
-                                                                   @RequestParam(value = "size", defaultValue = "10") int size) {
+                                                                                        @RequestParam(value = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ConsultaResponseDto> consultaDtos = consultaService.getConsultaByMedicoId(medico_id, pageable);
-        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta ->EntityModel.of(consulta)
+        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta -> EntityModel.of(consulta)
                 .add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel()));
 
         return ResponseEntity.status(HttpStatus.OK).body(consultaEntities);
@@ -95,10 +95,10 @@ public class ConsultaController {
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoCliente(#cliente_id, authentication)")
     public ResponseEntity<Page<EntityModel<ConsultaResponseDto>>> getConsultaByClienteId(@PathVariable(value = "cliente_id") UUID cliente_id, @RequestParam(value = "page", defaultValue = "0") int page,
-                                                                                             @RequestParam(value = "size",defaultValue = "10") int size) {
+                                                                                         @RequestParam(value = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ConsultaResponseDto> consultaDtos = consultaService.getConsultaByClienteId(cliente_id, pageable);
-        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta ->EntityModel.of(consulta)
+        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta -> EntityModel.of(consulta)
                 .add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel()));
 
         return ResponseEntity.status(HttpStatus.OK).body(consultaEntities);
@@ -127,13 +127,13 @@ public class ConsultaController {
     @ApiResponse(responseCode = "404", description = "Consulta não encontrada")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoConsulta(#id, authentication)")
-    public ResponseEntity<Void> alterarStatusConsulta(@PathVariable UUID id, @RequestParam String status) {
-        consultaService.alterarStatusConsulta(id, status);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    public ResponseEntity<ConsultaResponseDto> alterarStatusConsulta(@PathVariable UUID id, @RequestParam String status) {
+        ConsultaResponseDto response = consultaService.alterarStatusConsulta(id, status);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("cliente/minhasConsultas")
-    public ResponseEntity<Page<ConsultaClienteDto>> consultasCliente(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(20) int size){
+    public ResponseEntity<Page<ConsultaClienteDto>> consultasCliente(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(20) int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ConsultaClienteDto> response = consultaService.buscarConsultasCliente(usuarioModel, pageable);
 
@@ -141,7 +141,7 @@ public class ConsultaController {
     }
 
     @GetMapping("medico/minhasConsultas")
-    public ResponseEntity<Page<ConsultaMedicoDto>> consultasMedico(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(20) int size){
+    public ResponseEntity<Page<ConsultaMedicoDto>> consultasMedico(@AuthenticationPrincipal UsuarioModel usuarioModel, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(20) int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ConsultaMedicoDto> response = consultaService.buscarConsultasMedico(usuarioModel, pageable);
 
