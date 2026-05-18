@@ -107,7 +107,9 @@ public class MedicoService {
 
         var consultas = consultaRepository.findByMedico_IdAndStatusNot(medico.getId(), Status.CANCELADA);
 
-        consultas.forEach(consulta -> consulta.setStatus(Status.CANCELADA));
+        consultas.forEach(consulta -> {
+            if (consulta.getStatus().equals(Status.PENDENTE)) consulta.setStatus(Status.CANCELADA);
+        });
 
         usuario.setEnabled(false);
 

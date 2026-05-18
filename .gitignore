@@ -31,9 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
-docker-compose.yaml
+
 # variáveis de ambiente
 .env
 .env.*
 .log
 logs
+logs/
+*.log

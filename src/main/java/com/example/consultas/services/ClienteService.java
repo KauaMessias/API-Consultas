@@ -66,7 +66,7 @@ public class ClienteService {
         ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(ClienteNotFoundException::new);
         UsuarioModel usuario = clienteModel.getUsuario();
 
-        if(!usuario.isEnabled()){
+        if (!usuario.isEnabled()) {
             log.warn("Usuário inativo");
             throw new UsuarioInativoException();
         }
@@ -92,7 +92,10 @@ public class ClienteService {
     public ClienteResponseDto getClienteById(UUID id) {
         log.info("Buscando o cliente com o id {}", id);
 
-        ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(()-> {log.warn("Cliente com o id {} não encontrado", id);return new ClienteNotFoundException();});
+        ClienteModel clienteModel = clienteRepository.findById(id).orElseThrow(() -> {
+            log.warn("Cliente com o id {} não encontrado", id);
+            return new ClienteNotFoundException();
+        });
 
         log.info("Cliente encontrado com sucesso");
         return new ClienteResponseDto(clienteModel);
@@ -127,7 +130,9 @@ public class ClienteService {
 
         var consultas = consultaRepository.findByCliente_IdAndStatusNot(cliente.getId(), Status.CANCELADA);
 
-        consultas.forEach(consulta -> consulta.setStatus(Status.CANCELADA));
+        consultas.forEach(consulta -> {
+            if (consulta.getStatus().equals(Status.PENDENTE)) consulta.setStatus(Status.CANCELADA);
+        });
 
         usuario.setEnabled(false);
 
@@ -141,8 +146,8 @@ public class ClienteService {
         }
     }
 
-    public ClienteResponseDto exibirPerfil(UsuarioModel usuarioModel){
-        if(!usuarioModel.getRole().equals(Roles.CLIENTE)){
+    public ClienteResponseDto exibirPerfil(UsuarioModel usuarioModel) {
+        if (!usuarioModel.getRole().equals(Roles.CLIENTE)) {
             throw new ResourceAccessException("Acesso negado");
         }
 

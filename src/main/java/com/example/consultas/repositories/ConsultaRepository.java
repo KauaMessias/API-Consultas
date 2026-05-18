@@ -79,13 +79,6 @@ public interface ConsultaRepository extends JpaRepository<ConsultaModel, UUID> {
 
     boolean existsByMedico_IdAndDataConsulta(UUID medicoId, LocalDateTime dataConsulta);
 
-    boolean existsByMedico_IdAndDataConsultaBetweenAndStatus(UUID medicoId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, Status status);
-
-    boolean existsByCliente_IdAndDataConsultaBetweenAndStatus(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, Status status);
-
-    boolean existsByMedico_IdAndDataConsultaBetweenAndIdNotAndStatus(UUID medicoId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
-
-    boolean existsByCliente_IdAndDataConsultaBetweenAndIdNotAndStatus(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
 
     boolean existsByCliente_IdAndDataConsultaBetweenAndIdNotAndStatusNot(UUID clienteId, LocalDateTime dataConsultaAfter, LocalDateTime dataConsultaBefore, UUID id, Status status);
 
