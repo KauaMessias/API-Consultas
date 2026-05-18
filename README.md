@@ -1,7 +1,7 @@
 # API de Consultas Médicas
 
 API REST para gerenciamento de consultas médicas, desenvolvida com Java e Spring Boot.
-O sistema permite o cadastro de clientes e médicos, autenticação com JWT, controle de acesso por perfil e por vínculo com o recurso, gerenciamento de horários médicos, agendamento de consultas e busca de médicos e horários disponíveis.
+O sistema permite o cadastro de clientes e médicos, autenticação com JWT, controle de acesso por role e por vínculo com o recurso, gerenciamento de horários de atendimento, agendamento de consultas e busca de médicos e horários disponíveis.
 
 ## Tecnologias utilizadas
 
