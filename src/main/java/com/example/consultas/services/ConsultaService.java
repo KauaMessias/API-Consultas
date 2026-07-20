@@ -35,30 +35,6 @@ public class ConsultaService {
         this.clienteRepository = clienteRepository;
     }
 
-
-    public List<ConsultaResponseDto> getConsultaByMedicoCrm(String medicoCrm) {
-        log.info("Buscando consultas do médico com o CRM {}", medicoCrm);
-        var consultas = consultaRepository.findByMedico_Crm(medicoCrm)
-                .stream()
-                .map(ConsultaResponseDto::new)
-                .toList();
-
-        log.info("{} consultas encontradas", consultas.size());
-        return consultas;
-    }
-
-
-    public List<ConsultaResponseDto> getConsultaByClienteCpf(String clienteCpf) {
-        log.info("Buscando consultas de um cliente");
-        var consultas = consultaRepository.findByCliente_Cpf(clienteCpf)
-                .stream()
-                .map(ConsultaResponseDto::new)
-                .toList();
-        log.info("{} consultas encontradas", consultas.size());
-        return consultas;
-    }
-
-
     public Page<ConsultaResponseDto> getConsultaByMedicoId(UUID id, Pageable pageable) {
         log.info("Buscando consultas do médico com id {}", id);
         if (!medicoRepository.existsById(id)) {
@@ -72,13 +48,13 @@ public class ConsultaService {
     }
 
 
-    public Page<ConsultaResponseDto> getConsultaByClienteId(UUID id, Pageable pageable) {
+    public Page<ConsultaClienteDto> getConsultaByClienteId(UUID id, Pageable pageable) {
         log.info("Buscando consultas do cliente com id {}", id);
         if (!clienteRepository.existsById(id)) {
             throw new ClienteNotFoundException();
         }
-        var consultas = consultaRepository.findByCliente_IdOrderByStatus(id, pageable)
-                .map(ConsultaResponseDto::new);
+        var consultas = consultaRepository.findByCliente_Id(id, pageable)
+                .map(ConsultaClienteDto::new);
         log.info("{} consultas encontradas", consultas.getTotalElements());
 
         return consultas;
@@ -105,12 +81,12 @@ public class ConsultaService {
         ClienteModel clienteModel = clienteRepository.findByUsuario_Id(usuario.getId()).orElseThrow(ClienteNotFoundException::new);
         consultaModel.setCliente(clienteModel);
 
-        if (consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndStatusNot(consultaDto.medico_id(), consultaDto.dataConsulta().minusMinutes(INTERVALO_CONSULTA), consultaDto.dataConsulta().plusMinutes(INTERVALO_CONSULTA), Status.CANCELADA)) {
+        if (consultaRepository.existsByMedico_IdAndDataConsultaAndStatusNot(consultaDto.medico_id(), consultaDto.dataConsulta(), Status.CANCELADA)) {
             log.warn("Médico com o id {} já possui uma consulta neste horário", medicoModel.getId());
             throw new ConflitoConsultaException("Médico já possui uma consulta no horário.");
         }
 
-        if (consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndStatusNot(clienteModel.getId(), consultaDto.dataConsulta().minusMinutes(INTERVALO_CONSULTA), consultaDto.dataConsulta().plusMinutes(INTERVALO_CONSULTA), Status.CANCELADA)) {
+        if (consultaRepository.existsByCliente_IdAndDataConsultaAndStatusNot(clienteModel.getId(), consultaDto.dataConsulta(), Status.CANCELADA)) {
             log.warn("Cliente com o id {} já possui uma consulta neste horário", clienteModel.getId());
             throw new ConflitoConsultaException("Cliente já possui uma consulta no horário.");
         }
@@ -132,12 +108,12 @@ public class ConsultaService {
 
         verificarStatusConsulta(consultaModel);
 
-        if (consultaRepository.existsByMedico_IdAndDataConsultaBetweenAndIdNotAndStatusNot(consultaModel.getMedico().getId(), consultaDto.data().minusMinutes(INTERVALO_CONSULTA), consultaDto.data().plusMinutes(INTERVALO_CONSULTA), consultaModel.getId(), Status.CANCELADA)) {
+        if (consultaRepository.existsByMedico_IdAndDataConsultaAndIdNotAndStatusNot(consultaModel.getMedico().getId(), consultaDto.data(), consultaModel.getId(), Status.CANCELADA)) {
             log.warn("Médico com o id {} já possui uma consulta neste horário", consultaModel.getMedico().getId());
             throw new ConflitoConsultaException();
         }
 
-        if (consultaRepository.existsByCliente_IdAndDataConsultaBetweenAndIdNotAndStatusNot(consultaModel.getCliente().getId(), consultaDto.data().minusMinutes(INTERVALO_CONSULTA), consultaDto.data().plusMinutes(INTERVALO_CONSULTA), consultaModel.getId(), Status.CANCELADA)) {
+        if (consultaRepository.existsByCliente_IdAndDataConsultaAndIdNotAndStatusNot(consultaModel.getCliente().getId(), consultaDto.data(), consultaModel.getId(), Status.CANCELADA)) {
             log.warn("Cliente com o id {} já possui uma consulta neste horário", consultaModel.getCliente().getId());
             throw new ConflitoConsultaException();
         }

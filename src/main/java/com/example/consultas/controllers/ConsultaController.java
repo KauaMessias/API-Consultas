@@ -1,7 +1,6 @@
 package com.example.consultas.controllers;
 
 import com.example.consultas.dtos.consulta.*;
-import com.example.consultas.models.Status;
 import com.example.consultas.models.UsuarioModel;
 import com.example.consultas.security.SecurityConfigurations;
 import com.example.consultas.services.ConsultaService;
@@ -94,11 +93,11 @@ public class ConsultaController {
     @ApiResponse(responseCode = "404", description = "Cliente não encontrado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
     @PreAuthorize("@authz.acessoCliente(#cliente_id, authentication)")
-    public ResponseEntity<Page<EntityModel<ConsultaResponseDto>>> getConsultaByClienteId(@PathVariable(value = "cliente_id") UUID cliente_id, @RequestParam(value = "page", defaultValue = "0") int page,
+    public ResponseEntity<Page<EntityModel<ConsultaClienteDto>>> getConsultaByClienteId(@PathVariable(value = "cliente_id") UUID cliente_id, @RequestParam(value = "page", defaultValue = "0") int page,
                                                                                          @RequestParam(value = "size", defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<ConsultaResponseDto> consultaDtos = consultaService.getConsultaByClienteId(cliente_id, pageable);
-        Page<EntityModel<ConsultaResponseDto>> consultaEntities = consultaDtos.map(consulta -> EntityModel.of(consulta)
+        Page<ConsultaClienteDto> consultaDtos = consultaService.getConsultaByClienteId(cliente_id, pageable);
+        Page<EntityModel<ConsultaClienteDto>> consultaEntities = consultaDtos.map(consulta -> EntityModel.of(consulta)
                 .add(linkTo(methodOn(ConsultaController.class).getConsulta(consulta.id())).withSelfRel()));
 
         return ResponseEntity.status(HttpStatus.OK).body(consultaEntities);

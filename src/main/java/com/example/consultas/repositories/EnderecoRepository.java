@@ -32,5 +32,7 @@ public interface EnderecoRepository extends JpaRepository<EnderecoModel, UUID> {
 
     List<EnderecoModel> findAllByUsuario_IdAndPrincipal(UUID usuarioId, Boolean principal);
 
-    EnderecoModel findByUsuario_IdAndPrincipal(UUID usuarioId, Boolean principal);
+    List<EnderecoModel> findAllByUsuario_Id(UUID usuarioId);
+
+    Optional<EnderecoModel> findByUsuario_IdAndPrincipal(UUID usuarioId, Boolean principal);
 }

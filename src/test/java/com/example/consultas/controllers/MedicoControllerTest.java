@@ -170,7 +170,7 @@ class MedicoControllerTest {
 
         Page<MedicoResponseDto> medicosDtos = new PageImpl<>(List.of(medico1, medico2));
 
-        when(medicoService.getAllMedicos(ArgumentMatchers.any(Pageable.class), null, null)).thenReturn(medicosDtos);
+        when(medicoService.getAllMedicos(null, null, ArgumentMatchers.any(Pageable.class))).thenReturn(medicosDtos);
 
         mockMvc.perform(get("/api/v1/medicos")
                         .param("page", "0")

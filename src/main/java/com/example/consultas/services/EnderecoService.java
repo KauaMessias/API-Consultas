@@ -12,8 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -100,7 +100,14 @@ public class EnderecoService {
                     log.warn("Endereco com o id {} não encontrado", id);
                     return new EnderecoNotFoundException();
                 });
-
+        if(endereco.getPrincipal()){
+            List<EnderecoModel> enderecos = enderecoRepository.findAllByUsuario_IdAndPrincipal(endereco.getUsuario().getId(), false);
+            if(!enderecos.isEmpty()){
+                EnderecoModel novoPrincipal = enderecos.getFirst();
+                novoPrincipal.setPrincipal(true);
+                enderecoRepository.save(novoPrincipal);
+            }
+        }
         enderecoRepository.delete(endereco);
 
         log.info("Endereço deletado com sucesso");
@@ -108,7 +115,8 @@ public class EnderecoService {
 
     @Transactional
     public EnderecoDto mudarPrincipal(UUID id, UsuarioModel usuarioModel){
-        EnderecoModel principal = enderecoRepository.findByUsuario_IdAndPrincipal(usuarioModel.getId(), true);
+        EnderecoModel principal = enderecoRepository.findByUsuario_IdAndPrincipal(usuarioModel.getId(), true).orElseThrow(EnderecoNotFoundException::new);
+
         principal.setPrincipal(false);
         enderecoRepository.save(principal);
 

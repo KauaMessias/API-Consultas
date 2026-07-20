@@ -8,6 +8,7 @@ import com.example.consultas.models.*;
 import com.example.consultas.repositories.ClienteRepository;
 import com.example.consultas.repositories.ConsultaRepository;
 import com.example.consultas.repositories.UsuarioRepository;
+import com.example.consultas.repositories.ValidacaoEmailRepository;
 import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +25,23 @@ import java.util.UUID;
 @Slf4j
 public class ClienteService {
 
+    private final AuthService authService;
+
     private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
     private final ConsultaRepository consultaRepository;
+    private final EmailService emailService;
+    private final ValidacaoEmailRepository verificacaoEmailRepository;
 
-
-    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, ConsultaRepository consultaRepository) {
+    public ClienteService(ClienteRepository clienteRepository, PasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, ConsultaRepository consultaRepository, EmailService emailService, ValidacaoEmailRepository verificacaoEmailRepository, AuthService authService) {
         this.clienteRepository = clienteRepository;
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
         this.consultaRepository = consultaRepository;
+        this.emailService = emailService;
+        this.verificacaoEmailRepository = verificacaoEmailRepository;
+        this.authService = authService;
     }
 
     @Transactional
@@ -50,10 +57,13 @@ public class ClienteService {
 
         ClienteModel clienteModel = clienteRequestDto.toEntity();
 
-        UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(clienteRequestDto.email(), passwordEncoder.encode(clienteRequestDto.senha()), Roles.CLIENTE, true));
+        UsuarioModel usuario = usuarioRepository.save(new UsuarioModel(clienteRequestDto.email(), passwordEncoder.encode(clienteRequestDto.senha()), Roles.CLIENTE, false));
         clienteModel.setUsuario(usuario);
 
         clienteModel = clienteRepository.save(clienteModel);
+
+        authService.enviarValidacao(usuario);
+
         log.info("Cliente cadastrado com sucesso. id = {}", clienteModel.getId());
 
         return new ClienteResponseDto(clienteModel);

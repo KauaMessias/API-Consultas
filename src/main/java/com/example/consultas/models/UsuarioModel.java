@@ -44,6 +44,10 @@
         @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
         private List<RefreshToken> refreshTokens;
 
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
+        private List<ValidacaoEmailModel> validacoesEmail;
+
         public UsuarioModel(String email, String senha, Roles role, boolean enabled) {
             this.email = email;
             this.senha = senha;

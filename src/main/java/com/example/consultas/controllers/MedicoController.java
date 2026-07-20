@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.hibernate.Remove;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.CollectionModel;
@@ -80,12 +81,12 @@ public class MedicoController {
     @ApiResponse(responseCode = "200", description = "Médicos encontrados com sucesso")
     @ApiResponse(responseCode = "403", description = "Acesso negado")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
-    public ResponseEntity<Page<MedicoResponseDto>> getAllMedicos(@RequestParam(defaultValue = "0", value = "page") @Min(0) int page,
-                                                                 @RequestParam(defaultValue = "10", value = "size") @Min(1) @Max(25) int size,
-                                                                 @RequestParam(required = false) String especialidade, @RequestParam(required = false) String cidade) {
+    public ResponseEntity<Page<MedicoResponseDto>> getAllMedicos ( @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
+                                                                   @RequestParam(value = "size", defaultValue = "10") @Min(1) @Max(30) int size, @RequestParam(required = false) String especialidade, @RequestParam(required = false) String cidade) {
+
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<MedicoResponseDto> medicoResponseDtos = medicoService.getAllMedicos(pageable, especialidade, cidade);
+        Page<MedicoResponseDto> medicoResponseDtos = medicoService.getAllMedicos(especialidade, cidade, pageable);
 
         return ResponseEntity.status(HttpStatus.OK).body(medicoResponseDtos);
     }

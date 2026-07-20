@@ -1,5 +1,6 @@
 package com.example.consultas.controllers;
 
+import com.example.consultas.dtos.consulta.ConsultaClienteDto;
 import com.example.consultas.dtos.consulta.ConsultaDto;
 import com.example.consultas.dtos.consulta.ConsultaResponseDto;
 import com.example.consultas.dtos.consulta.ConsultaUpdateDto;
@@ -269,10 +270,10 @@ class ConsultaControllerTest {
     @Test
     void getConsultaByClienteId() throws Exception {
         UUID clienteId = UUID.randomUUID();
-        ConsultaResponseDto c1 = new ConsultaResponseDto(UUID.randomUUID(), data, "Rotina", "Consulta de rotina", Status.PENDENTE, UUID.randomUUID(), clienteId);
-        ConsultaResponseDto c2 = new ConsultaResponseDto(UUID.randomUUID(), data, "Rotina", "Consulta de rotina", Status.PENDENTE, UUID.randomUUID(), clienteId);
+        ConsultaClienteDto c1 = new ConsultaClienteDto(UUID.randomUUID(), "Rotina", "Consulta de rotina", data, Status.PENDENTE, UUID.randomUUID(), "DR","1234","Clinico Geral");
+        ConsultaClienteDto c2 = new ConsultaClienteDto(UUID.randomUUID(), "Rotina", "Consulta de rotina", data, Status.PENDENTE, UUID.randomUUID(), "DR","1234","Clinico Geral");
 
-        Page<ConsultaResponseDto> consultas = new PageImpl<>(List.of(c1, c2));
+        Page<ConsultaClienteDto> consultas = new PageImpl<>(List.of(c1, c2));
 
         when(consultaService.getConsultaByClienteId(eq(clienteId), any(Pageable.class))).thenReturn(consultas);
 
@@ -419,7 +420,7 @@ class ConsultaControllerTest {
 
         doNothing().when(consultaService).alterarStatusConsulta(eq(consultaId), eq("CONCLUIDA"));
         mockMvc.perform(patch("/api/v1/consultas/{id}", consultaId)
-                .param("status", Status.CONCLUIDA.toString()))
+                        .param("status", Status.CONCLUIDA.toString()))
                 .andExpect(status().isNoContent());
 
         verify(consultaService).alterarStatusConsulta(eq(consultaId), eq("CONCLUIDA"));
